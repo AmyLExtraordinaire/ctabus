@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<title>Analyzing CTA Route 55: Garfield</title>
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> 
+</head>
+
+<body>
+<style>
+
+body {
+	padding-top: 50px;
+	padding-bottom: 25px;
+}
+
+div.row {
+	padding-bottom: 25px;
+}
+
+h1 {
+	font: 32px sans-serif;
+}
+
+h2 {
+	font: 24px sans-serif;
+}
+
+p {
+	font: 14px sans-serif;
+	text-align: justify;
+}
+
+select {
+	padding: 5px 35px 5px 5px;
+}
+
+.widgets {
+	padding-top: 10px;
+	padding-left: 20px;
+}
+
+.dropdown {
+	width: 100%;
+	max-width: 200px;
+}
+
+.time {
+	display: inline-block;
+}
+
+
+#travelPlot {
+	max-width: 800px;
+}
+
+#waitPlot {
+	max-width: 800px;
+}
+
+.axis--x path, .major path, .major text {
+	display: none;
+}
+
+circle.scatter {
+	fill: black;
+}
+
+path.median {
+	fill: none;
+	stroke: darkred;
+	stroke-width: 1px;
+}
+
+rect.timeband {
+	fill: lightgreen;
+	opacity: 0.2;
+}
+
+.loading {
+	opacity: 0.4;
+}
+
+</style>
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h1>Analyzing Data from CTA Route 55 Garfield</h1>
+		<p>The Chicago Transit Authority (CTA) operates a fleet of nearly 1900 buses across 140 bus routes. Each bus in the CTA's fleet is equipped with a device that uses GPS to determine its location at any given time. Buses report their location approximately every minute to the CTA's servers where the data is then accessible using their Bus Tracker API. In addition to providing location information, the API provides estimated arrival times and geospatial information for each bus route. The scatter plots below are derived from location data collected from Route 55 Garfield using the Bus Tracker API during February and March 2017.</p>
+
+		<p>This is an on going project to learn more about the CTA's bus operations. Data from more bus routes is coming soon. Read more about future plans for the project below.</p>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h2>About Route 55</h2>
+		<p><a href="http://www.transitchicago.com/bus/55/">Route 55 Garfield</a> operates at all hours every day of the week along 55th Street and Garfield Boulevard between the Museum of Science and Industry (MSI) and 55th/St. Louis. Service is available between MSI and the Midway Orange Line station every day between around 4am to 1am. The route serves a number of neighborhoods, including Hyde Park, Back of the Yards, Englewood, Gage Park, and West Elsdon.</p>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h2>Planning Your Commute</h2>
+		<p>Using the dropdown boxes on the left, select an origin bus stop, a destination bus stop, and a day of the week to generate scatter plots detailing trip and wait times for the 55 bus throughout the day. The top plot shows the travel times for buses going between the origin and desination stops. The bottom plot shows the longest possible wait times between buses leaving the origin stop heading toward the desintation stop. It is necessary to provide a destination stop when computing the wait times, since not all scheduled bus trips travel the full length of the route. For example, many scheduled trips only travel between St. Louis and MSI or between St. Louis and Ashland, so this information needs to be taken into account when considering trips between say Midway and MSI. The red curves indicate the median travel and wait times calculated over 15-minute intervals. Read a written summary of the travel and wait times at a particular time of day by selecting values from the hour and minute dropdown menus. The pale green boxes highlight a 15-minute interval around the time being considered.</p>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-2 col-md-offset-2" id="test">
+			<div class="widgets" id="test"><b>Origin</b><br/> <select class="dropdown" id="origin-select"></select></div>
+			<div class="widgets"><b>Destination</b><br/> <select class="dropdown" id="destination-select"></select></div>
+			<div class="widgets"><b>Days</b><br/> <select class="dropdown" id="day-select"></select></div>
+			<div class="widgets">
+				<div class="time"><b>Hour</b><br/> <select class="dropdown" id="hour-select"></select></div>
+				<div class="time"><b>Minute</b><br/> <select class="dropdown" id="minute-select"></select></div>
+			</div>
+			<div class="widgets" id="submit">
+				<input class="dropdown" name="updateButton" type=button value="Update" onclick="update()" />
+			</div>
+	</div>
+	<div class="col-md-6">
+		<div id="plot">
+			<div id="textbox">
+				<span id="title"></span><br />
+				<span id="caption"></span>
+			</div>
+			<div id="travelPlot"></div>
+			<div id="waitPlot"></div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h2>Future Analysis</h2>
+		<p>I am currently collecting data from 30 other bus routes, including bus routes 9 Ashland, 49 Western, 66 Chicago, and 77 Belmont. In addition to calculating the travel and wait times between stops, I plan to use the location data to determine where and when <a href="https://en.wikipedia.org/wiki/Bus_bunching">bus bunching</a> tends to occur along each route. Bus bunching is the phenomenon where two or more buses from the same route appear together or in close succession at a bus stop when a longer wait time between the buses was scheduled. Also, I will try to quantify which buses tend to be the most or least on time by examining how their recorded times and locations deviate from the CTA's official schedule.</p> 
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h2>Acknowledgements</h2>
+		<p>This project was created by Spencer Chan as part of the <a href="https://chipymentor.org/">ChiPy Mentorship program</a>. Special thanks to Matt Hall, my mentor, for his patience and support while I learned Python for the first time, as well as Ray Berg, the mentorship director, for his hard work organizing a fun and successful program. Further details about the project, including the project's back story, my experience in the ChiPy mentorship, and data processing are discussed in a series of <a href="https://medium.com/@spencer.chan/">blog posts</a>. The SciPy Stack, Jupyter, Bootstrap, and D3.js were used in the creation of this project. Flask and Bokeh were used during production and were still in use at the time the project was presented at the July 2017 ChiPy meeting. Data was accessed from the Chicago Transit Authority using their <a href="http://www.transitchicago.com/developers/bustracker.aspx">Bus Tracker API</a>.</p>
+	</div>
+</div>
+</body>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+<script src="https://d3js.org/d3-contour.v1.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="plots.js"></script>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<title>Visualizing CTA Route 55: Garfield</title>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+</head>
+
+<body>
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h1>Analyzing Data from CTA Route {{ route }} Garfield</h1>
+		<p>The Chicago Transit Authority (CTA) operates a fleet of nearly 1900 buses across 140 bus routes. Each bus in the CTA's fleet is equipped with a device that uses GPS to determine its location at any given time. Buses report their location approximately every minute to the CTA's servers where it is accessible using the API. In addition to providing location information, the API provides estimated arrival times and geospatial information about each bus route. The scatter plots below are derived from location data collected from Route 55 Garfield using the Bus Tracker API during Februry and March 2017. Use the drop down box to view the data for a different bus route.</p>
+		<form action="" method="post" name="select_route">
+			{{ form.hidden_tag() }}
+			<p>Select a route {{ form.route }}</p>
+			<p><input type="submit" value="Submit"></p>
+		</form>
+		<h2>About Route {{ route }}</h2>
+		<p>Route 55 Garfield operates at all hours every day of the week along 55th Street and Garfield Boulevard between the Museum of Science and Industry (MSI) and 55th/St. Louis. Service is available between MSI and the Midway Orange Line station every day between around 4am to 1am.</p>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h2>Planning Your Commute</h2>
+		<p>Using the widgets on the left, select a starting bus stop, a destination bus stop, and a day of the week to generate scatter plots detailing trip and wait times for the 55 bus at throughout the day. The top plot shows the travel times for buses going between the starting and desination stops. The bottom plot shows the longest possible wait times between buses leaving the starting stop heading toward the desintation stop. It is necessary to provide a destination stop when computing the wait times, since not all scheduled bus trips travel the entirety of the route. Many scheduled trips travel only between St. Louis and MSI or between St. Louis and Ashland, so this needs to be taken into account when considering trips between Midway and MSI for example. The red line on both plots indicates the median trip or wait times. Read a written summary of the travel and wait times at a particular time of day by changing the hour and minute sliders. The pale green box highlights a 15-minute interval around the time being considered.</p>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<div id="plots">
+			{{ script|safe }}
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2">
+		<h2>Acknowledgements</h2>
+		<p>This project was created by Spencer Chan as part of the <a href="https://chipymentor.org/">ChiPy Mentorship program</a>. Special thanks to Ray Berg, the mentorship program director, and Matt Hall, my mentor, for their continuing advice and support. The SciPy Stack, Jupyter, Flask, Bokeh, and Bootstrap were used in the creation of this project. Data was accessed from the Chicago Transit Authority using their <a href="http://www.transitchicago.com/developers/bustracker.aspx">Bus Tracker API</a>.
+	</div>
+</div>
+</body>
+</html>
