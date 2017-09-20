@@ -137,102 +137,123 @@ rect.timeband {
 }
 
 </style>
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2">
-		<h1>Analyzing Data from CTA Bus Routes</h1>
-		<p>The Chicago Transit Authority (CTA) has a fleet of nearly 1900 buses that operates over 130 bus routes and 1,300 route miles. Each bus in the CTA's fleet is equipped with a device that uses GPS to determine its location at any given time. Buses report their locations approximately every minute to the CTA's servers where the latest vehicle positions are then accessible using their Bus Tracker API. In addition to providing location information, the API provides estimated arrival times and geospatial information for each bus route.</p>
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1">
+			<h1>Analyzing Data from CTA Bus Routes</h1>
+			<p>The Chicago Transit Authority (CTA) has a fleet of nearly 1900 buses that operates over 130 bus routes and 1,300 route miles. Each bus in the CTA's fleet is equipped with a device that uses GPS to determine its location at any given time. Buses report their locations approximately every minute to the CTA's servers where the latest vehicle positions are then accessible using their Bus Tracker API. In addition to providing location information, the API provides estimated arrival times and geospatial information for each bus route.</p>
 
-		<p>This is an on going project to learn more about the CTA's bus operations. As the Bus Tracker API makes accessible only the latest vehicle positions, historical data must be collected. Part of this project aims to create a repository of raw vehicle location data for a selection of the CTA's most frequently ridden buses. As time goes on, data from new bus routes will be collected. This project also aims to analyze and make sense of the raw data to gain insights into the performance of the authority's bus routes. The Raw data used in this project will be released soon. Read more about future plans for the project below.</p>
+			<p>This is an on going project to learn more about the CTA's bus operations. As the Bus Tracker API makes accessible only the latest vehicle positions, historical data must be collected. Part of this project aims to create a repository of raw vehicle location data for a selection of the CTA's most frequently ridden buses. As time goes on, data from new bus routes will be collected. This project also aims to analyze and make sense of the raw data to gain insights into the performance of the authority's bus routes. The Raw data used in this project will be released soon. Read more about future plans for the project below.</p>
 
-		<!--<p>Select a bus route from the dropdown menu below to learn more about it.</p>
-		<select id="route-select"></select> -->
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2">
-		<h2>About Route 55</h2>
-		<p><a href="http://www.transitchicago.com/bus/55/">Route 55 Garfield</a> operates at all hours every day of the week along 55th Street and Garfield Boulevard between the Museum of Science and Industry (MSI) and 55th/St. Louis. Service is available between MSI and the Midway Orange Line station every day between around 4am to 1am. The route serves a number of neighborhoods, including Hyde Park, Back of the Yards, Englewood, Gage Park, and West Elsdon.</p>
-
-		<p>The heat map below gives us an overview of how the buses operate during the week. Each cell breaks down the number of buses dispatched by time of day and by day of the week. Darker squares indicate times when a greater number of buses start their trips. "Westbound" and "Eastbound" changes the direction of travel that the data in heat map represents.
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2" style="min-width: 576px">
-		<div id="svg-departures"></div>
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2">
-		<p><span id="dispatched-summary"></span></p>
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2">
-		<h2>Bus Bunching</h2>
-		<p><a href="https://en.wikipedia.org/wiki/Bus_bunching">Bus bunching</a> is the phenomenon when two or more buses from the same route appear together or in close succession at a bus stop when a longer wait time between the buses was scheduled. Bus bunching can be defined in terms of the headway between buses. Headway is the time between two consecutive buses. For example, when two buses appear at a bus stop in close succession, the headway between the two buses is small. There is no standard minimum threshold headway that defines bus bunching. The heat map below counts the number of bus bunching incidents at each stop along Route 55 broken down by time of day. The default setting counts bus bunching incidents when the headway between buses is less than two minutes.	You may adjust the slider to explore how defining the headway threshold differently changes the frequency of bus bunching incidents. </p>
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2" style="min-width: 576px">
-		<div id="svg"></div>
-	</div>
-</div>	
-
-<div class="row">
-  <div id="slider"></div>
-</div>
-
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2">
-		<h2>Planning Your Commute</h2>
-		<p>Using the dropdown boxes on the left, select an origin bus stop, a destination bus stop, and a day of the week to generate scatter plots detailing trip and wait times for the 55 bus throughout the day. The top plot shows the travel times for buses going between the origin and desination stops. The bottom plot shows the longest possible wait times between buses leaving the origin stop heading toward the desintation stop. It is necessary to provide a destination stop when computing the wait times, since not all scheduled bus trips travel the full length of the route. For example, many scheduled trips only travel between St. Louis and MSI or between St. Louis and Ashland, so this information needs to be taken into account when considering trips between say Midway and MSI. The red curves indicate the median travel and wait times calculated over 15-minute intervals. Read a written summary of the travel and wait times at a particular time of day by selecting values from the hour and minute dropdown menus. The pale blue boxes highlight a 15-minute interval around the time being considered.</p>
-	</div>
-</div>
-
-<div class ="row justify-content-center">
-
-	<div>
-		<div class="widgets"><b>Origin</b><br/> <select class="dropdown" id="origin-select"></select></div>
-		<div class="widgets"><b>Destination</b><br/> <select class="dropdown" id="destination-select"></select></div>
-		<div class="widgets"><b>Days</b><br/> <select class="dropdown" id="day-select"></select></div>
-		<div class="widgets">
-			<div class="time"><b>Hour</b><br/> <select class="dropdown" id="hour-select"></select></div>
-			<div class="time"><b>Minute</b><br/> <select class="dropdown" id="minute-select"></select></div>
-		</div>
-		<div class="widgets" id="submit">
-			<input class="dropdown" name="updateButton" type=button value="Update" onclick="update()" />
+			<!--<p>Select a bus route from the dropdown menu below to learn more about it.</p>
+			<select id="route-select"></select> -->
 		</div>
 	</div>
+</div>
 
-	<div class="col-lg-5 offset-sm-1 offset-lg-0">
-		<div id="plot">
-			<div id="textbox">
-				<span id="title"></span><br />
-				<span id="caption"></span>
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1">
+			<h2>About Route 55</h2>
+			<p><a href="http://www.transitchicago.com/bus/55/">Route 55 Garfield</a> operates at all hours every day of the week along 55th Street and Garfield Boulevard between the Museum of Science and Industry (MSI) and 55th/St. Louis. Service is available between MSI and the Midway Orange Line station every day between around 4am to 1am. The route serves a number of neighborhoods, including Hyde Park, Back of the Yards, Englewood, Gage Park, and West Elsdon.</p>
+
+			<p>The heat map below gives us an overview of how the buses operate during the week. Each cell breaks down the number of buses dispatched by time of day and by day of the week. Darker squares indicate times when a greater number of buses start their trips. "Westbound" and "Eastbound" changes the direction of travel that the data in heat map represents.
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1" style="min-width: 576px">
+			<div id="svg-departures"></div>
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1">
+			<p><span id="dispatched-summary"></span></p>
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1">
+			<h2>Bus Bunching</h2>
+			<p><a href="https://en.wikipedia.org/wiki/Bus_bunching">Bus bunching</a> is the phenomenon when two or more buses from the same route appear together or in close succession at a bus stop when a longer wait time between the buses was scheduled. Bus bunching can be defined in terms of the headway between buses. Headway is the time between two consecutive buses. For example, when two buses appear at a bus stop in close succession, the headway between the two buses is small. There is no standard minimum threshold headway that defines bus bunching. The heat map below counts the number of bus bunching incidents at each stop along Route 55 broken down by time of day. The default setting counts bus bunching incidents when the headway between buses is less than two minutes.	You may adjust the slider to explore how defining the headway threshold differently changes the frequency of bus bunching incidents. </p>
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1" style="min-width: 576px">
+			<div id="svg"></div>
+		</div>
+	</div>	
+</div>
+
+<div class="container">
+	<div class="row">
+	  <div id="slider"></div>
+	</div>
+</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1">
+			<h2>Planning Your Commute</h2>
+			<p>Using the dropdown boxes on the left, select an origin bus stop, a destination bus stop, and a day of the week to generate scatter plots detailing trip and wait times for the 55 bus throughout the day. The top plot shows the travel times for buses going between the origin and desination stops. The bottom plot shows the longest possible wait times between buses leaving the origin stop heading toward the desintation stop. It is necessary to provide a destination stop when computing the wait times, since not all scheduled bus trips travel the full length of the route. For example, many scheduled trips only travel between St. Louis and MSI or between St. Louis and Ashland, so this information needs to be taken into account when considering trips between say Midway and MSI. The red curves indicate the median travel and wait times calculated over 15-minute intervals. Read a written summary of the travel and wait times at a particular time of day by selecting values from the hour and minute dropdown menus. The pale blue boxes highlight a 15-minute interval around the time being considered.</p>
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<div class ="row justify-content-center">
+		<div>
+			<div class="widgets"><b>Origin</b><br/> <select class="dropdown" id="origin-select"></select></div>
+			<div class="widgets"><b>Destination</b><br/> <select class="dropdown" id="destination-select"></select></div>
+			<div class="widgets"><b>Days</b><br/> <select class="dropdown" id="day-select"></select></div>
+			<div class="widgets">
+				<div class="time"><b>Hour</b><br/> <select class="dropdown" id="hour-select"></select></div>
+				<div class="time"><b>Minute</b><br/> <select class="dropdown" id="minute-select"></select></div>
 			</div>
-			<div id="travelPlot"></div>
-			<div id="waitPlot"></div>
+			<div class="widgets" id="submit">
+				<input class="dropdown" name="updateButton" type=button value="Update" onclick="update()" />
+			</div>
+		</div>
+
+		<div class="offset-md-1 col-lg-6 offset-lg-0">
+			<div id="plot">
+				<div id="textbox">
+					<span id="title"></span><br />
+					<span id="caption"></span>
+				</div>
+				<div id="travelPlot"></div>
+				<div id="waitPlot"></div>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1">
+			<h2>Future Analysis</h2>
+			<p>I am currently collecting data from 30 other bus routes, including bus routes 9 Ashland, 49 Western, 66 Chicago, and 77 Belmont. In addition to calculating the travel and wait times between stops, I plan to use the location data to determine where and when <a href="https://en.wikipedia.org/wiki/Bus_bunching">bus bunching</a> tends to occur along each route. Bus bunching is the phenomenon where two or more buses from the same route appear together or in close succession at a bus stop when a longer wait time between the buses was scheduled. Also, I will try to quantify which buses tend to be the most or least on time by examining how their recorded times and locations deviate from the CTA's official schedule.</p> 
 		</div>
 	</div>
-
 </div>
 
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2">
-		<h2>Future Analysis</h2>
-		<p>I am currently collecting data from 30 other bus routes, including bus routes 9 Ashland, 49 Western, 66 Chicago, and 77 Belmont. In addition to calculating the travel and wait times between stops, I plan to use the location data to determine where and when <a href="https://en.wikipedia.org/wiki/Bus_bunching">bus bunching</a> tends to occur along each route. Bus bunching is the phenomenon where two or more buses from the same route appear together or in close succession at a bus stop when a longer wait time between the buses was scheduled. Also, I will try to quantify which buses tend to be the most or least on time by examining how their recorded times and locations deviate from the CTA's official schedule.</p> 
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-sm-10 offset-sm-1 col-xl-8 offset-xl-2">
-		<h2>Acknowledgements</h2>
-		<p>This project was created by Spencer Chan as part of the <a href="https://chipymentor.org/">ChiPy Mentorship program</a>. Special thanks to Matt Hall, my mentor, for his patience and support while I learned Python for the first time, as well as Ray Berg, the mentorship director, for his hard work organizing a fun and successful program. Further details about the project, including the project's back story, my experience in the ChiPy mentorship, and data processing are discussed in a series of <a href="https://medium.com/@spencer.chan/">blog posts</a>. The SciPy Stack, Jupyter, Bootstrap, and D3.js were used in the creation of this project. Flask and Bokeh were used during production and were still in use at the time the project was presented at the July 2017 ChiPy meeting. Data was accessed from the Chicago Transit Authority using their <a href="http://www.transitchicago.com/developers/bustracker.aspx">Bus Tracker API</a>.</p>
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12 col-lg-10 offset-lg-1">
+			<h2>Acknowledgements</h2>
+			<p>This project was created by Spencer Chan as part of the <a href="https://chipymentor.org/">ChiPy Mentorship program</a>. Special thanks to Matt Hall, my mentor, for his patience and support while I learned Python for the first time, as well as Ray Berg, the mentorship director, for his hard work organizing a fun and successful program. Further details about the project, including the project's back story, my experience in the ChiPy mentorship, and data processing are discussed in a series of <a href="https://medium.com/@spencer.chan/">blog posts</a>. The SciPy Stack, Jupyter, Bootstrap, and D3.js were used in the creation of this project. Flask and Bokeh were used during production and were still in use at the time the project was presented at the July 2017 ChiPy meeting. Data was accessed from the Chicago Transit Authority using their <a href="http://www.transitchicago.com/developers/bustracker.aspx">Bus Tracker API</a>.</p>
+		</div>
 	</div>
 </div>
 
