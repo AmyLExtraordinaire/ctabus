@@ -21,13 +21,13 @@ except TypeError:
 
 # Load the Data Set
 names = ["tripid", "start", "stop", "day_of_week", "decimal_time", "travel_time", "wait_time"]
-all_files = glob.glob(os.path.join("../processed_data/trips_and_waits/" + args_route + "/", "*.csv"))   
+all_files = glob.glob(os.path.join("../data/processed/trips_and_waits/" + args_route + "/", "*.csv"))   
 df_each = (pd.read_csv(f, skiprows=1, names=names) for f in all_files)
 df = pd.concat(df_each, ignore_index=True)
 
 # Load the list of bus stops
 def load_bus_stops(rt):
-    with open("../processed_data/stop_lists/" + rt + ".json", 'r') as f:
+    with open("../data/processed/stop_lists/" + rt + ".json", 'r') as f:
         bus_stops = json.load(f, object_pairs_hook=OrderedDict)
     return bus_stops
 

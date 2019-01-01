@@ -134,7 +134,7 @@
   }
 
   function updateDirectionDeparture(direction) {
-    d3.csv("processed_data/departures/55_departures_" + direction + ".csv", type, function(error, departures) {
+    d3.csv("data/processed/departures/55_departures_" + direction + ".csv", type, function(error, departures) {
       if (error) throw error;
 
       color.domain([0, Math.ceil(d3.max(departures.map(d => d.departures)))]);

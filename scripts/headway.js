@@ -216,7 +216,7 @@
 
   function updateDirection(direction, route) {
     svg.classed("loading", true);
-    d3.tsv("processed_data/headways/" + route + "_headways_" + direction + ".tsv", type, function(error, headway) {
+    d3.tsv("data/processed/headways/" + route + "_headways_" + direction + ".tsv", type, function(error, headway) {
       if (error) throw error;
 
       if (direction == "wb") {  
