@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS vehicles (
+    vid text,
+    tmstmp text,
+    lat text,
+    lon text,
+    hdg text,
+    pid int,
+    rt text,
+    des text,
+    pdist int,
+    dly text,
+    tatripid text,
+    tablockid text,
+    zone text,
+    PRIMARY KEY (tatripid, rt, tmstmp)
+);
