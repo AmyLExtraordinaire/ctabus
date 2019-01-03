@@ -27,7 +27,7 @@ df = pd.concat(df_each, ignore_index=True)
 
 # Load the list of bus stops
 def load_bus_stops(rt):
-    with open("../data/processed/stop_lists/" + rt + ".json", 'r') as f:
+    with open("../data/processed/stop_lists/" + rt + "_stop_list.json", 'r') as f:
         bus_stops = json.load(f, object_pairs_hook=OrderedDict)
     return bus_stops
 
