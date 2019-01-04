@@ -115,4 +115,5 @@ dmypy.json
 .pyre/
 
 # other, personal and project files
+keys.config
 data/raw/
