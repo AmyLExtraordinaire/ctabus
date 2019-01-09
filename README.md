@@ -20,8 +20,8 @@ The goal of this project is not to offer suggestions to improve service, but to 
 * HTML
 * JavaScript
 
-## Announcements and Updates
-During 2019, location data will be gathered for all active CTA bus routes. That's over 120 bus routes! The efficiency of the data processing scripts has improved greatly in anticipation of the large volume of new data. Stay tuned as processed data from new bus routes are added to the project.
+## Project Status
+The project is actively collecting and analyzing data. Throughout 2019, bus location data will be gathered for all active CTA bus routes—over 120 routes—and will be processed and analyzed on a monthly basis.
 
 ## Data Sources
 Bus location data is gathered from the CTA [Bus Tracker](http://www.transitchicago.com/developers/bustracker.aspx)’s **`getvehicles`** API at a regular interval via a Python script run as a cron job. The Bus Tracker family of APIs provides near-real-time locations and estimated arrival times of all CTA buses. The API makes accessible only the most recent position for each vehicle, hence the need to regularly access the API and archive the data.
@@ -30,7 +30,7 @@ Supporting data, such as the locations of bus stops, also comes from the Bus Tra
 
 For the purposes of this project, the most important data collected from **`getvehicles`** is the location of each vehicle along its route (`pdist`) and the time the vehicle was at that location (`tmstmp`). We can discover a lot using those two pieces of information, especially when combined with the bus stop location data, including: the speed of a bus, the wait time between two buses at a particular stop, the travel time between two stops, and more.
 
-## Current Features
+## Current Analysis
 The visualizations on the project website currently focus on bus location data collected during February and March 2017 from the 55 Garfield bus. At present, they show:
 * When buses are dispatched throughout the day and week
 * The time of day and location along the route where bus bunching occurs most often
