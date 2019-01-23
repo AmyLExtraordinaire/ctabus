@@ -5,7 +5,7 @@ CTA Bus Data Analysis is an ongoing project to analyze the performance of the Ch
 Visit the project page: [https://spencerchan.github.io/ctabus](https://spencerchan.github.io/ctabus)
 
 ## Motivation
-This project started because I kept having bad luck catching the bus. I wanted to know: is the bus schedule for CTA route 55 Garfield overpromising on its mid-afternoon wait times or am I just unlucky? Asked more precisely: is 20 minutes an unreasonable amount of time to wait for an eastbound 55 Garfield bus at the Garfield Red Line Station at 4pm on a weekday? Since answering this question, the project has morphed into something larger and more ambitious.
+This project started because I kept having bad luck catching the bus. I wanted to know: is the bus schedule for CTA route 55 Garfield overpromising on its late-afternoon wait times or am I just unlucky? Asked more precisely: is 20 minutes an unreasonable amount of time to wait for an eastbound 55 Garfield bus at the Garfield Red Line Station at 4pm on a weekday? Since answering this question, the project has morphed into something larger and more ambitious.
 
 Even in the face of declining ridership over the past decade, the bus remains a popular way to get around Chicago: the CTA provides over 800,000 bus rides every weekday, totaling to nearly 250 million bus rides each year. In fact, bus rides account for over half of the CTA's daily and annual ridership. With so many Chicagoans depending on the bus each day, it is critical that bus service throughout the city is reliable, fast, and frequent. This is especially true in order to encourage people to start using public transit and to stem further losses in ridership.
 
