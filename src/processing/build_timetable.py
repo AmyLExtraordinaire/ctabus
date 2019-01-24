@@ -5,8 +5,9 @@ import arrow
 import argparse
 import json
 import glob
-import os
-from tools import *
+import os.path
+import tools
+import definitions
 
 def build_sql_query(params):
   sql = "SELECT * FROM vehicles WHERE rt=:rt"
@@ -24,17 +25,9 @@ def load_raw_data(db_path, **kwargs):
     df = pd.read_sql_query(sql, conn, params=params)
   return df
 
-def load_routes():
-  # TO DO: FIX PATH
-  with open("../../data/raw/getroutes/routes.json") as f:
-    routes_json = json.load(f)
-  routes = [route.get('rt') for route in routes.get('bustime-response').get('routes')]
-  return routes
-
 def load_patterns(rt):
   dfs = []
-  # TO DO: FIX PATH
-  for file in glob.glob(os.path.join(patterns_path, "{}_*".format(rt))):
+  for file in glob.glob(os.path.join(definitions.PATTERNS_DIR, "{}_*".format(rt))):
     with open(file) as f:
       pattern_json = json.load(f)
     stops = [stop for stop in pattern_json.get('pt') if stop.get('typ') != "W"]
@@ -59,7 +52,7 @@ def remove_unknown_patterns(df, patterns):
 def create_unique_ids(df):
   df["unix_tmstmp"] = df.tmstmp.apply(lambda x: arrow.get(x, 'US/Central').timestamp)
   df.sort_values(["tatripid", "tmstmp"], inplace=True)
-  # If two data points with same tripID are more than 30 minutes a part, they probably belong to different trips
+  # If two data points with same tatripID are more than 30 minutes a part, they probably belong to different trips
   # In practice, such data points will usually (but not always), be at least 24 hours apart.
   g = df.groupby(["tatripid", (df.tmstmp.diff() > pd.Timedelta('30 minutes')).astype(int).cumsum()])
   idxmins = g.unix_tmstmp.idxmin()
@@ -120,18 +113,6 @@ def interpolate_stop_arrival_times(df, stop, patterns):
   interpolated_arrivals.loc[mask] = interpolated_arrivals[mask].map(lambda x: arrow.get(x).to('US/Central').format('YYYY-MM-DD HH:mm:ss'))
   return interpolated_arrivals
 
-# Holiday schedules
-# Our services operate on a Sunday schedule on New Year's Day, Memorial Day,
-# July 4th (Independence Day), Labor Day, Thanksgiving Day and Christmas Day.
-holidays = [
-  "2017-01-01", "2017-05-29", "2017-07-04", "2018-09-04", "2018-11-23", "2017-12-25",
-  "2018-01-01", "2018-05-28", "2018-07-04", "2018-09-03", "2018-11-22", "2018-12-25",
-  "2019-01-01", "2019-05-27", "2019-07-04", "2019-09-02", "2019-11-28", "2019-12-25"
-]
-cta_holidays = pd.DatetimeIndex(holidays)
-# TO DO: FIX PATH
-timetables_path = "../../data/processed/timetables/"
-
 def build_timetable(df, patterns):
   stop_list = patterns.stpnm.dropna().unique()
   timetable = pd.DataFrame(np.nan, index=df.ID.unique(), columns=stop_list)
@@ -146,22 +127,23 @@ def build_timetable(df, patterns):
   timetable["rtdir"] = timetable.pid.map(patterns.groupby('pid').rtdir.first())
   timetable["start_date"] = pd.to_datetime(timetable.start_date)
   timetable["day_of_week"] = timetable.start_date.dt.dayofweek
+  cta_holidays = pd.DatetimeIndex(definitions.HOLIDAYS)
   timetable["holiday"] = timetable.start_date.isin(cta_holidays)
   return timetable
 
 def write_timetable(timetable, rt):
-  # TO DO: FIX PATH
-  check_if_path_exists(timetables_path)
-  out_path = os.path.join(timetables_path, "{}_timetable.csv".format(rt))
+  tools.check_if_path_exists(definitions.TIMETABLES_DIR)
+  out_path = os.path.join(definitions.TIMETABLES_DIR, "{}_timetable.csv".format(rt))
   timetable.to_csv(out_path, index=False)
 
 def main(db_path, route, start_date, end_date):
   if not route:
-    rts = load_routes()
+    rts = tools.load_routes()
   else:
     rts = [route]
 
   for rt in rts:
+
     print "processing route {}...".format(rt)
 
     df = load_raw_data(db_path, rt=rt, start_date=start_date, end_date=end_date)
@@ -180,7 +162,7 @@ def main(db_path, route, start_date, end_date):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('db', help='sqlite db path')
-  parser.add_argument('-r', '--route', help='chose a route to process')
+  parser.add_argument('-r', '--route', help='choose a route to process')
   parser.add_argument('-s', '--start')
   parser.add_argument('-e', '--end')
   args = parser.parse_args()
