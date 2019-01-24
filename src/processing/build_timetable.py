@@ -8,58 +8,24 @@ import glob
 import os
 from tools import *
 
-def lrload_raw_data(db_path, rt, start_date, end_date):
-  with sqlite3.connect(db_path) as conn:
-    df = pd.read_sql_query(
-    	"""
-      SELECT *
-      FROM vehicles
-      WHERE rt=?
-      AND tmstmp BETWEEN ? AND ?;
-      """,
-    	conn,
-    	params=(rt, start_date, end_date,)
-    )
-  return df
+def build_sql_query(params):
+  sql = "SELECT * FROM vehicles WHERE rt=:rt"
+  if 'start_date' in params:
+    sql += " AND tmstmp >= :start_date"
+  if 'end_date' in params:
+    sql += " AND tmstmp < :end_date"
+  sql += ";"
+  return sql
 
-def lload_raw_data(db_path, rt, start_date):
+def load_raw_data(db_path, **kwargs):
+  params = {k:v for k,v in kwargs.items() if v is not None}
+  sql = build_sql_query(params)
   with sqlite3.connect(db_path) as conn:
-    df = pd.read_sql_query(
-      """
-      SELECT *
-      FROM vehicles
-      WHERE rt=?
-      AND tmstmp >= ?;
-      """,
-      conn,
-      params=(rt, start_date,)
-    )
-  return df
-
-def rload_raw_data(db_path, rt, end_date):
-  with sqlite3.connect(db_path) as conn:
-    df = pd.read_sql_query(
-      """
-      SELECT *
-      FROM vehicles
-      WHERE rt=?
-      AND tmstmp <= ?;
-      """,
-      conn,
-      params=(rt, end_date,)
-    )
-  return df
-
-def load_raw_data(db_path, rt):
-  with sqlite3.connect(db_path) as conn:
-    df = pd.read_sql_query(
-      "SELECT * FROM vehicles WHERE rt=?;",
-      conn,
-      params=(rt,)
-    )
+    df = pd.read_sql_query(sql, conn, params=params)
   return df
 
 def load_routes():
+  # TO DO: FIX PATH
   with open("../../data/raw/getroutes/routes.json") as f:
     routes_json = json.load(f)
   routes = [route.get('rt') for route in routes.get('bustime-response').get('routes')]
@@ -67,6 +33,7 @@ def load_routes():
 
 def load_patterns(rt):
   dfs = []
+  # TO DO: FIX PATH
   for file in glob.glob(os.path.join(patterns_path, "{}_*".format(rt))):
     with open(file) as f:
       pattern_json = json.load(f)
@@ -113,7 +80,6 @@ def clean(df, patterns):
 
 def build_query_strings(stop, patterns):
   filtered = patterns[patterns.stpnm == stop][["pid", "pdist"]]
-  #stop_pdist = shift_terminal_stop_pdist(patterns, pattern, stop)
 
   query_str_before = " | ".join(["(pid == '{}' & pdist < {})".format(pid, pdist) for pid, pdist in zip(filtered.pid, filtered.pdist)])
   query_str_after = " | ".join(["(pid == '{}' & pdist >= {})".format(pid, pdist) for pid, pdist in zip(filtered.pid, filtered.pdist)])
@@ -163,6 +129,7 @@ holidays = [
   "2019-01-01", "2019-05-27", "2019-07-04", "2019-09-02", "2019-11-28", "2019-12-25"
 ]
 cta_holidays = pd.DatetimeIndex(holidays)
+# TO DO: FIX PATH
 timetables_path = "../../data/processed/timetables/"
 
 def build_timetable(df, patterns):
@@ -174,6 +141,7 @@ def build_timetable(df, patterns):
     timetable[stop] = interpolate_stop_arrival_times(df, stop, patterns)
 
   timetable.reset_index(inplace=True)
+  # TO DO: Update timetable columns
   timetable[["start_date", "pid", "tatripid"]] = timetable.ID.str.split("_", expand=True)
   timetable["rtdir"] = timetable.pid.map(patterns.groupby('pid').rtdir.first())
   timetable["start_date"] = pd.to_datetime(timetable.start_date)
@@ -182,6 +150,7 @@ def build_timetable(df, patterns):
   return timetable
 
 def write_timetable(timetable, rt):
+  # TO DO: FIX PATH
   check_if_path_exists(timetables_path)
   out_path = os.path.join(timetables_path, "{}_timetable.csv".format(rt))
   timetable.to_csv(out_path, index=False)
@@ -194,15 +163,8 @@ def main(db_path, route, start_date, end_date):
 
   for rt in rts:
     print "processing route {}...".format(rt)
-    if start_date and end_date:
-      df = lrload_raw_data(db_path, rt, start_date, end_date)
-    elif start_date:
-      df = lload_raw_data(db_path, rt, start_date)
-    elif end_date:
-      df = rload_raw_data(db_path, rt, end_date)
-    else:
-      df = load_raw_data(db_path, rt)
 
+    df = load_raw_data(db_path, rt=rt, start_date=start_date, end_date=end_date)
     print "loaded raw data"
     patterns = load_patterns(rt)
     print "loaded patterns"
