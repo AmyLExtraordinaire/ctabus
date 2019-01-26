@@ -39,9 +39,9 @@ def load_patterns(rt):
   return patterns
 
 def shift_terminal_stop_pdists(patterns):
-  patterns.loc[np.intersect1d(patterns.groupby('pid').seq.idxmin(), patterns[patterns.pdist < 500].index), "pdist"] = 500
-  idxs = np.intersect1d(patterns.groupby('pid').seq.idxmax(), patterns[patterns.pdist > patterns.ln - 500].index)
-  pattern_lengths = patterns.loc[idxs].ln 
+  patterns.loc[patterns[patterns.pdist < 500].groupby('pid').seq.idxmin(), "pdist"] = 500
+  idxs = patterns[patterns.pdist > patterns.ln - 500].groupby('pid').seq.idxmax()
+  pattern_lengths = patterns.loc[idxs, "ln"] 
   patterns.loc[idxs, "pdist"] = pattern_lengths - 500
 
 def remove_unknown_patterns(df, patterns):    
