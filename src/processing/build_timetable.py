@@ -9,35 +9,6 @@ import os.path
 import tools
 import definitions
 
-def build_sql_query(params):
-  sql = "SELECT * FROM vehicles WHERE rt=:rt"
-  if 'start_date' in params:
-    sql += " AND tmstmp >= :start_date"
-  if 'end_date' in params:
-    sql += " AND tmstmp < :end_date"
-  sql += ";"
-  return sql
-
-def load_raw_data(db_path, **kwargs):
-  params = {k:v for k,v in kwargs.items() if v is not None}
-  sql = build_sql_query(params)
-  with sqlite3.connect(db_path) as conn:
-    df = pd.read_sql_query(sql, conn, params=params)
-  return df
-
-def load_patterns(rt):
-  dfs = []
-  for file in glob.glob(os.path.join(definitions.PATTERNS_DIR, "{}_*".format(rt))):
-    with open(file) as f:
-      pattern_json = json.load(f)
-    stops = [stop for stop in pattern_json.get('pt') if stop.get('typ') != "W"]
-    df = pd.DataFrame(stops)
-    pattern_json.pop('pt')
-    dfs.append(df.assign(**pattern_json))
-  patterns = pd.concat(dfs, ignore_index=True)
-  patterns.pid = patterns.pid.astype(str)
-  return patterns
-
 def shift_terminal_stop_pdists(patterns):
   patterns.loc[patterns[patterns.pdist < 500].groupby('pid').seq.idxmin(), "pdist"] = 500
   idxs = patterns[patterns.pdist > patterns.ln - 500].groupby('pid').seq.idxmax()
@@ -146,9 +117,9 @@ def main(db_path, route, start_date, end_date):
 
     print "processing route {}...".format(rt)
 
-    df = load_raw_data(db_path, rt=rt, start_date=start_date, end_date=end_date)
+    df = tools.load_raw_data(db_path, rt=rt, start_date=start_date, end_date=end_date)
     print "loaded raw data"
-    patterns = load_patterns(rt)
+    patterns = tools.load_patterns(rt, False)
     print "loaded patterns"
     shift_terminal_stop_pdists(patterns)
     print "shifted terminal stops"
