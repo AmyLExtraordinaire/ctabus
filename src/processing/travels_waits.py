@@ -5,6 +5,7 @@ import json
 import glob
 import os
 import tools
+import definitions
 
 def load_timetable(filename):
   timetable = pd.read_csv(timetables_path + filename)
@@ -21,7 +22,7 @@ def timedelta_to_decimal(td):
 
 def calculate_travel_times(df, origin, destinations):
   df[destinations] = df[destinations].sub(df[origin], axis=0)
-  df[destinations] = df[destinations].apply(timedelta_to_decimal)
+  df[destinations] = df[destinations].applymap(timedelta_to_decimal)
   return df
 
 def calculate_wait_times(df, stop):
@@ -35,16 +36,17 @@ def calculate_wait_times(df, stop):
   df.wait_time = df.wait_time.apply(timedelta_to_decimal)
   return df
 
-def build_travel_waits_df(df, patterns, direction):
+# TO DO: organize and limit number of columns in output
+def build_travel_waits_df(df, patterns, rtdir):
   info_columns = ["start_date", "pid", "tatripid", "rtdir", "day_of_week", "holiday", "decimal_time", "wait_time"]
 
-  stop_list = patterns[patterns.rtdir == direction].stpnm.dropna().unique()
-  directional_df = df.loc[df.rtdir == direction]
+  stop_list = patterns[patterns.rtdir == rtdir].stpnm.dropna().unique()
+  directional_df = df.loc[df.rtdir == rtdir]
   directional_df[stop_list] = directional_df[stop_list].apply(pd.to_datetime)
 
   travels_waits = []
   for origin in stop_list:
-    destinations = get_destination_stops(patterns, origin, direction)
+    destinations = get_destination_stops(patterns, origin, rtdir)
 
     if not destinations:
       continue
@@ -62,14 +64,12 @@ def build_travel_waits_df(df, patterns, direction):
     travels_waits.append(melted_df)
   return pd.concat(travels_waits, ignore_index=True)
 
-def write_travel_waits():
-  #travel_waits_path = "../../data/processed/trips_and_waits/" + str(rt) + "/"
-  #check_if_path_exists(travel_waits_path)
-  #file_name = travel_waits_path + origin.replace("/", "").replace(".", "") + "_" + direction + ".csv"
-  #melted_df.to_csv(file_name, columns=header, header=False, index=False, mode='ab+')
-  pass
+def write_travel_waits(travels_waits, rt, rtdir):
+  tools.check_if_path_exists(definitions.TRAVELS_WAITS_DIR)
+  out_path = os.path.join(definitions.TRAVELS_WAITS_DIR, "{}_{}_travels_waits.csv".format(rt, rtdir.lower()))
+  travels_waits.to_csv(out_path, index=False)
 
-def main(db_path, route, start_date, end_date):
+def main(route):
   if not route:
     rts = tools.load_routes()
   else:
@@ -78,11 +78,19 @@ def main(db_path, route, start_date, end_date):
   for rt in rts:
     print "processing route {}...".format(rt)
 
+    timetable = tools.load_timetable(rt)
+    print "loaded timetable"
+    patterns = tools.load_patterns(rt, False)
+    print "loaded patterns"
+
+    for rtdir in patterns.rtdir.unique():
+      travels_waits = build_travel_waits_df(timetable, patterns, rtdir)
+      print "built {} travels_waits".format(rtdir)
+      write_travel_waits(travels_waits, rt, rtdir)
+      print "saved {} travels_waits".format(rtdir)
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('db', help='sqlite db path')
-  parser.add_argument('-r', '--route', help='chose a route to process')
-  parser.add_argument('-s', '--start')
-  parser.add_argument('-e', '--end')
+  parser.add_argument('-r', '--route', help='choose a route to process')
   args = parser.parse_args()
-  main(args.db, args.route, args.start, args.end)
+  main(args.route)
