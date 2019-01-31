@@ -1,4 +1,5 @@
 import os.path
+import glob
 import json
 import sqlite3
 import pandas as pd
@@ -55,3 +56,12 @@ def load_patterns(rt, waypoints):
   patterns = pd.concat(dfs, ignore_index=True)
   patterns.pid = patterns.pid.astype(str)
   return patterns
+
+def load_timetable(rt):
+  timetable_path = os.path.join(definitions.TIMETABLES_DIR, "{}_timetable.csv".format(rt))
+  timetable = pd.read_csv(timetable_path)
+  patterns = load_patterns(rt, False)
+  stop_list = list(patterns.stpnm.unique())
+  convert_cols = stop_list + ["start_date"]
+  timetable[convert_cols] = timetable[convert_cols].apply(pd.to_datetime)
+  return timetable
