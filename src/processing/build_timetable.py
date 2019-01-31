@@ -4,7 +4,6 @@ import numpy as np
 import arrow
 import argparse
 import json
-import glob
 import os.path
 import tools
 import definitions

@@ -15,7 +15,7 @@ VEHICLES_DIR = os.path.join(RAW_DATA_DIR, "getvehicles")
 
 ## Processed data
 TIMETABLES_DIR = os.path.join(PROCESSED_DATA_DIR, "timetables")
-
+TRAVELS_WAITS_DIR = os.path.join(PROCESSED_DATA_DIR, "travels_waits")
 # Holiday schedules
 # Our services operate on a Sunday schedule on New Year's Day, Memorial Day,
 # July 4th (Independence Day), Labor Day, Thanksgiving Day and Christmas Day.

@@ -2,7 +2,7 @@ import sqlite3
 import pandas as pd
 import os.path
 import tools
-from definitions
+import definitions
 import ConfigParser
 
 config = ConfigParser.ConfigParser()
