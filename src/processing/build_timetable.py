@@ -42,7 +42,7 @@ def clean(df, patterns):
   remove_short_trips(df)
 
 def build_query_strings(stop, patterns):
-  filtered = patterns[patterns.stpnm == stop][["pid", "pdist"]]
+  filtered = patterns[patterns.stpid == stop][["pid", "pdist"]]
 
   query_str_before = " | ".join(["(pid == '{}' & pdist < {})".format(pid, pdist) for pid, pdist in zip(filtered.pid, filtered.pdist)])
   query_str_after = " | ".join(["(pid == '{}' & pdist >= {})".format(pid, pdist) for pid, pdist in zip(filtered.pid, filtered.pdist)])
@@ -66,7 +66,7 @@ def build_interpolation_table(df, stop, patterns):
   before, after = find_linear_interpolant_endpoints(df, stop, patterns)
   table = table.join(before, rsuffix="_before").join(after, rsuffix="_after")
 
-  pid_to_pdist = patterns[patterns.stpnm == stop].groupby('pid').pdist.first()
+  pid_to_pdist = patterns[patterns.stpid == stop].groupby('pid').pdist.first()
   mask = table.pid.isin(pid_to_pdist.index)
   table.loc[mask, "stop_pdist"] = table[mask].pid.map(pid_to_pdist)
 
@@ -84,7 +84,7 @@ def interpolate_stop_arrival_times(df, stop, patterns):
   return interpolated_arrivals
 
 def build_timetable(df, patterns):
-  stop_list = patterns.stpnm.dropna().unique()
+  stop_list = patterns.stpid.dropna().unique()
   timetable = pd.DataFrame(np.nan, index=df.ID.unique(), columns=stop_list)
   timetable.index.name = "ID"
 
@@ -92,48 +92,38 @@ def build_timetable(df, patterns):
     timetable[stop] = interpolate_stop_arrival_times(df, stop, patterns)
 
   timetable.reset_index(inplace=True)
-  # TO DO: Update timetable columns
   timetable[["start_date", "pid", "tatripid"]] = timetable.ID.str.split("_", expand=True)
+  timetable.drop(columns='ID', inplace=True)
   timetable["rtdir"] = timetable.pid.map(patterns.groupby('pid').rtdir.first())
   timetable["start_date"] = pd.to_datetime(timetable.start_date)
-  timetable["day_of_week"] = timetable.start_date.dt.dayofweek
-  cta_holidays = pd.DatetimeIndex(definitions.HOLIDAYS)
-  timetable["holiday"] = timetable.start_date.isin(cta_holidays)
   return timetable
 
-def write_timetable(timetable, rt):
+def write_timetable(timetable, rt, tag):
   tools.check_if_path_exists(definitions.TIMETABLES_DIR)
-  out_path = os.path.join(definitions.TIMETABLES_DIR, "{}_timetable.csv".format(rt))
+  out_path = os.path.join(definitions.TIMETABLES_DIR, "{}_{}_timetable.csv".format(rt, tag))
   timetable.to_csv(out_path, index=False)
 
-def main(db_path, route, start_date, end_date):
-  if not route:
-    rts = tools.load_routes()
-  else:
-    rts = [route]
+def main(rt, tag, start_date, end_date):
+  print "processing route {} for period {}...".format(rt, tag)
 
-  for rt in rts:
-
-    print "processing route {}...".format(rt)
-
-    df = tools.load_raw_data(db_path, rt=rt, start_date=start_date, end_date=end_date)
-    print "loaded raw data"
-    patterns = tools.load_patterns(rt, False)
-    print "loaded patterns"
-    shift_terminal_stop_pdists(patterns)
-    print "shifted terminal stops"
-    clean(df, patterns)
-    print "cleaned"
-    timetable = build_timetable(df, patterns)
-    print "built timetable"
-    write_timetable(timetable, rt)
-    print "saved"
+  df = tools.load_raw_data(rt, start_date=start_date, end_date=end_date)
+  print "loaded raw data"
+  patterns = tools.load_patterns(rt, False)
+  print "loaded patterns"
+  shift_terminal_stop_pdists(patterns)
+  print "shifted terminal stops"
+  clean(df, patterns)
+  print "cleaned"
+  timetable = build_timetable(df, patterns)
+  print "built timetable"
+  write_timetable(timetable, rt, tag)
+  print "saved"
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('db', help='sqlite db path')
-  parser.add_argument('-r', '--route', help='choose a route to process')
+  parser.add_argument('-r', '--rt', help='choose a route to process')
+  parser.add_argument('-t', '--tag', default='')
   parser.add_argument('-s', '--start')
   parser.add_argument('-e', '--end')
   args = parser.parse_args()
-  main(args.db, args.route, args.start, args.end)
+  main(args.db, args.rt, args.steart, args.end)

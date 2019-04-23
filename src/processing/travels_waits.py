@@ -13,9 +13,9 @@ def load_timetable(filename):
   return timetable
 
 def get_destination_stops(patterns, stop, direction):
-  filtered = patterns[(patterns.stpnm == stop) & (patterns.rtdir == direction)]
+  filtered = patterns[(patterns.stpid == stop) & (patterns.rtdir == direction)]
   query_str = " | ".join(["(pid == '{}' & seq > {})".format(pid, seq) for pid, seq in zip(filtered.pid, filtered.seq)])
-  return list(patterns.query(query_str).stpnm.unique())
+  return list(patterns.query(query_str).stpid.unique())
 
 def timedelta_to_decimal(td):
   return round(abs((td / np.timedelta64(1, 'D')) * 1440), 2)
@@ -38,9 +38,9 @@ def calculate_wait_times(df, stop):
 
 # TO DO: organize and limit number of columns in output
 def build_travel_waits_df(df, patterns, rtdir):
-  info_columns = ["start_date", "pid", "tatripid", "rtdir", "day_of_week", "holiday", "decimal_time", "wait_time"]
+  info_columns = ["start_date", "pid", "tatripid", "decimal_time", "wait_time"]
 
-  stop_list = patterns[patterns.rtdir == rtdir].stpnm.dropna().unique()
+  stop_list = patterns[patterns.rtdir == rtdir].stpid.dropna().unique()
   directional_df = df.loc[df.rtdir == rtdir]
   directional_df[stop_list] = directional_df[stop_list].apply(pd.to_datetime)
 
@@ -64,33 +64,28 @@ def build_travel_waits_df(df, patterns, rtdir):
     travels_waits.append(melted_df)
   return pd.concat(travels_waits, ignore_index=True)
 
-def write_travel_waits(travels_waits, rt, rtdir):
+def write_travel_waits(travels_waits, rt, rtdir, tag):
   tools.check_if_path_exists(definitions.TRAVELS_WAITS_DIR)
-  out_path = os.path.join(definitions.TRAVELS_WAITS_DIR, "{}_{}_travels_waits.csv".format(rt, rtdir.lower()))
+  out_path = os.path.join(definitions.TRAVELS_WAITS_DIR, "{}_{}_{}_travels_waits.csv".format(rt, rtdir.lower(), tag))
   travels_waits.to_csv(out_path, index=False)
 
-def main(route):
-  if not route:
-    rts = tools.load_routes()
-  else:
-    rts = [route]
+def main(rt, tag):
+  print "processing route {} for period {}...".format(rt, tag)
 
-  for rt in rts:
-    print "processing route {}...".format(rt)
+  timetable = tools.load_timetable(rt, tag)
+  print "loaded timetable"
+  patterns = tools.load_patterns(rt, False)
+  print "loaded patterns"
 
-    timetable = tools.load_timetable(rt)
-    print "loaded timetable"
-    patterns = tools.load_patterns(rt, False)
-    print "loaded patterns"
-
-    for rtdir in patterns.rtdir.unique():
-      travels_waits = build_travel_waits_df(timetable, patterns, rtdir)
-      print "built {} travels_waits".format(rtdir)
-      write_travel_waits(travels_waits, rt, rtdir)
-      print "saved {} travels_waits".format(rtdir)
+  for rtdir in patterns.rtdir.unique():
+    travels_waits = build_travel_waits_df(timetable, patterns, rtdir)
+    print "built {} travels_waits".format(rtdir)
+    write_travel_waits(travels_waits, rt, rtdir, tag)
+    print "saved {} travels_waits".format(rtdir)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('-r', '--route', help='choose a route to process')
+  parser.add_argument('-r', '--rt', help='choose a route to process')
+  parser.add_argument('-t', '--tag', default='')
   args = parser.parse_args()
-  main(args.route)
+  main(args.rt, args.tag)

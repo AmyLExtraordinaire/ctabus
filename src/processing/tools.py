@@ -18,8 +18,8 @@ def build_sql_query(params):
   if len(params) > 0:
     sql += " WHERE "
     conditions = []
-    if 'rt' in params:
-      conditions.append("rt=:rt")
+    #if 'rt' in params:
+    #  conditions.append("rt=:rt")
     if 'start_date' in params:
       conditions.append("tmstmp >= :start_date")
     if 'end_date' in params:
@@ -28,9 +28,10 @@ def build_sql_query(params):
   sql += ";"
   return sql
 
-def load_raw_data(db_path, **kwargs):
+def load_raw_data(rt, **kwargs):
   params = {k:v for k,v in kwargs.items() if v is not None}
   sql = build_sql_query(params)
+  db_path = os.path.join(definitions.VEHICLES_DIR, "route{}.db".format(rt))
   with sqlite3.connect(db_path) as conn:
     df = pd.read_sql_query(sql, conn, params=params)
   return df
@@ -57,11 +58,11 @@ def load_patterns(rt, waypoints):
   patterns.pid = patterns.pid.astype(str)
   return patterns
 
-def load_timetable(rt):
-  timetable_path = os.path.join(definitions.TIMETABLES_DIR, "{}_timetable.csv".format(rt))
+def load_timetable(rt, tag):
+  timetable_path = os.path.join(definitions.TIMETABLES_DIR, "{}_{}_timetable.csv".format(rt, tag))
   timetable = pd.read_csv(timetable_path)
   patterns = load_patterns(rt, False)
-  stop_list = list(patterns.stpnm.unique())
+  stop_list = list(patterns.stpid.unique())
   convert_cols = stop_list + ["start_date"]
   timetable[convert_cols] = timetable[convert_cols].apply(pd.to_datetime)
   return timetable
