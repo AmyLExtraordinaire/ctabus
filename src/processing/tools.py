@@ -55,7 +55,7 @@ def load_patterns(rt, waypoints):
     pattern_json.pop('pt')
     dfs.append(df.assign(**pattern_json))
   patterns = pd.concat(dfs, ignore_index=True)
-  patterns.pid = patterns.pid.astype(str)
+  #patterns.pid = patterns.pid.astype(str)
   return patterns
 
 def load_timetable(rt, tag):
@@ -66,3 +66,9 @@ def load_timetable(rt, tag):
   convert_cols = stop_list + ["start_date"]
   timetable[convert_cols] = timetable[convert_cols].apply(pd.to_datetime)
   return timetable
+
+def load_travels_waits(rt, rtdir, tag):
+  tw_path = os.path.join(definitions.TRAVELS_WAITS_DIR, "{}_{}_{}_travels_waits.csv".format(rt, rtdir, tag))
+  travels_waits = pd.read_csv(tw_path)
+  travels_waits.start_date = pd.to_datetime(travels_waits.start_date)
+  return travels_waits
