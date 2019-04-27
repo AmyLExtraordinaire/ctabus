@@ -153,7 +153,7 @@
     .html("Eastbound") // &#8594
     .style("cursor", "pointer")
     //.on("click", function(d) { updateEB(d3.select("#route-select").node().value) });
-    .on("click", updateEB(route));
+    .on("click", function(d) { updateEB(route) });
 
   var bottomCaptionRight = bottomAxis.append("text")
     .attr("id", "wb")
@@ -164,7 +164,7 @@
     .html("Westbound") //&#8592 
     .style("cursor", "pointer")
     //.on("click", function(d) { updateWB(d3.select("#route-select").node().value) });
-    .on("click", updateWB(route));
+    .on("click", function(d) { updateWB(route) });
 
   function updateEB(route) {
     if (!d3.select("#eb").classed("active")) {
