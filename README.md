@@ -2,7 +2,7 @@
 
 CTA Bus Data Analysis is an ongoing project to analyze the performance of the Chicago Transit Authority's bus routes. 
 
-Visit the project page: [https://spencerchan.github.io/ctabus](https://spencerchan.github.io/ctabus)
+Visit the current project page: [https://spencerchan.github.io/ctabus](https://spencerchan.github.io/ctabus)
 
 ## Motivation
 This project started because I kept having bad luck catching the bus. I wanted to know: is the bus schedule for CTA route 55 Garfield overpromising on its late-afternoon wait times or am I just unlucky? Asked more precisely: is 20 minutes an unreasonable amount of time to wait for an eastbound 55 Garfield bus at the Garfield Red Line Station at 4pm on a weekday? Since answering this question, the project has morphed into something larger and more ambitious.
@@ -31,27 +31,27 @@ Supporting data, such as the locations of bus stops, also comes from the Bus Tra
 For the purposes of this project, the most important data collected from **`getvehicles`** is the location of each vehicle along its route (`pdist`) and the time the vehicle was at that location (`tmstmp`). We can discover a lot using those two pieces of information, especially when combined with the bus stop location data, including: the speed of a bus, the wait time between two buses at a particular stop, the travel time between two stops, and more.
 
 ## Current Analysis
-The visualizations on the project website currently focus on bus location data collected during February and March 2017 from the 55 Garfield bus. At present, they show:
+The current project website and its visualizations focus on bus location data collected during February and March 2017 from the 55 Garfield bus. At present, they show:
 * When buses are dispatched throughout the day and week
 * The time of day and location along the route where bus bunching occurs most often
 * Travel times between any two major stops broken down by time of day
 * Wait times between consecutive buses broken down by time of day
 
 ## Future Plans
-* Process data for all major CTA bus routes each month
+* Create a brand new project website with pages providing analysis of each CTA bus route and analysis of bus service by Chicago neighborhood 
 * Analyze how each bus route adheres to or deviates from its scheduled service
-* Improve project page visualizations and enhance interactivity
-* Improve project page functionality on mobile devices
-* Improve documentation
+* Improve project pages to be more mobile friendly
+* Add documentation and provide instructions for replicating analysis
 * Publish raw data
 
 ## Directory structure
 ```bash
 ├── data
 │   └── processed				# final data sets used in visualizations and analysis
-├── flask-bokeh_site				# old flask site with bokeh visualizations 
+├── flask-bokeh_site				# old flask site with bokeh visualizations
+├── notebooks				# jupyter notebooks with data analysis
+├── references				# reference documents
 ├── scripts					# D3.js visualizations for current project page
-│ 
 ├── src						# source code for project
 │   ├── processing				# data processing scripts
 │   └── remote					# scripts to scrape vehicle data from Bus Tracker API
