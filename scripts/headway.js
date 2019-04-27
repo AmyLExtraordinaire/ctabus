@@ -6,6 +6,9 @@
     "wb": [0, 13, 32, 54, 66]
   }
 
+  //Note: route select is disabled. Scripts only work with Rt 55.
+  var route = "55";
+
   var margin = {top: 115, right: 50, bottom: 50, left: 30},
       outerWidth = 900,
       outerHeight = 500,
@@ -149,7 +152,8 @@
     .style("font", "bold 16px sans-serif")
     .html("Eastbound") // &#8594
     .style("cursor", "pointer")
-    .on("click", function(d) { updateEB(d3.select("#route-select").node().value) });
+    //.on("click", function(d) { updateEB(d3.select("#route-select").node().value) });
+    .on("click", updateEB(route));
 
   var bottomCaptionRight = bottomAxis.append("text")
     .attr("id", "wb")
@@ -159,7 +163,8 @@
     .style("font", "bold 16px sans-serif")
     .html("Westbound") //&#8592 
     .style("cursor", "pointer")
-    .on("click", function(d) { updateWB(d3.select("#route-select").node().value) });
+    //.on("click", function(d) { updateWB(d3.select("#route-select").node().value) });
+    .on("click", updateWB(route));
 
   function updateEB(route) {
     if (!d3.select("#eb").classed("active")) {
@@ -332,6 +337,6 @@
   }
 
   //updateWB(d3.select("#route-select").node().value);
-  updateWB("55");
+  updateWB(route);
 
 })();
