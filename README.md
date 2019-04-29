@@ -44,6 +44,9 @@ The current project website and its visualizations focus on bus location data co
 * Add documentation and provide instructions for replicating analysis
 * Publish raw data
 
+## Featured Notebooks
+* [Toward Neighborhood-Level Analysis: Bus Service in Logan Square](https://github.com/spencerchan/ctabus/blob/master/notebooks/Toward%20Neighborhood-Level%20Analysis%20-%20Bus%20Service%20in%20Logan%20Square.ipynb)
+
 ## Directory structure
 ```bash
 ├── data
