@@ -45,7 +45,8 @@ The current project website and its visualizations focus on bus location data co
 * Publish raw data
 
 ## Featured Notebooks
-* [Toward Neighborhood-Level Analysis: Bus Service in Logan Square](https://github.com/spencerchan/ctabus/blob/master/notebooks/Toward%20Neighborhood-Level%20Analysis%20-%20Bus%20Service%20in%20Logan%20Square.ipynb)
+* [Visualizing Bus Bunching on Route 73 Armitage](https://nbviewer.jupyter.org/github/spencerchan/ctabus/blob/master/notebooks/Visualizing%20Bus%20Bunching.ipynb)
+* [Toward Neighborhood-Level Analysis: Bus Service in Logan Square](https://nbviewer.jupyter.org/github/spencerchan/ctabus/blob/master/notebooks/Toward%20Neighborhood-Level%20Analysis%20-%20Bus%20Service%20in%20Logan%20Square.ipynb)
 
 ## Directory structure
 ```bash
