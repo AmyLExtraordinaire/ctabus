@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  margin: 0;
+}
+
+#vis {
+    margin: 0 auto;
+    max-width: 960px;
+    width: 100%;
+}
+
+#vis div {
+    float: left;
+    position: relative;
+}
+
+.small-map {
+  opacity: 0.6;
+}
+
+rect.textbox {
+  opacity: 0;
+}
+
+.small-map-wrapper:hover .small-map.hover {
+  opacity: 0.8;
+}
+
+.small-map-wrapper:hover rect.hover {
+  opacity: 0.3; 
+}
+
+svg.active {
+  opacity: 1;
+}
+
+rect.active {
+  opacity: 1;
+  fill: #333;
+}
+
+text.active {
+  fill: white;
+}
+
+path {
+  fill: none;
+  stroke-linejoin: round;
+}
+
+div#tooltip { 
+  position: absolute;
+  box-sizing: border-box;
+  padding: 8px; 
+  border-radius: 2px;    
+  background: #000;
+  opacity: 0.8;
+  font: bold 10px sans-serif;    
+  text-align: center;       
+  color: #fff;
+}
+
+div#tooltip:after {
+  content: "\25BC";
+  display: inline;
+  line-height: 1;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  margin: -2px 0 0 0;
+  color: #000;
+}
+
+.axis path{
+  stroke: none;
+}
+</style>
+<div id="vis"></div>
+<div id="test"></div>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="//d3js.org/d3-tile.v0.0.min.js"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script>
+var busstops_eb = [];
+
+var pi = Math.PI,
+    tau = 2 * pi;
+
+var width = Math.min(150, window.innerWidth),
+    height = Math.min(75, window.innerHeight);
+
+var color = d3.scaleSequential(d3.interpolateMagma);
+
+// Initialize the projection to fit the world in a 1×1 square centered at the origin.
+var projection = d3.geoMercator()
+    .scale(1 / tau)
+    .translate([0, 0]);
+
+var path = d3.geoPath()
+    .projection(projection);
+
+var tile = d3.tile()
+    .size([width, height]);
+
+var fullViz = d3.select("#vis");
+
+var legendWidth = 100;
+
+var legendY = d3.scaleLinear()
+  .domain([0, legendWidth]);
+
+var inverseLegendY = d3.scaleLinear()
+  .range([0, legendWidth]);
+
+var tooltip = d3.select("body")
+    .append("div")
+    .attr("id", "tooltip")
+    .style("visibility", "hidden");
+
+d3.queue()
+    .defer(d3.json, "73_eb.topojson")
+    .defer(d3.json, "data.json")
+    .await(ready);
+
+function ready(error, rt, bunching) {
+  if (error) throw error;
+
+  // Apply a zoom transform equivalent to projection.{scale,translate,center}.
+	var b = path.bounds(topojson.feature(rt, rt.objects.stops)),
+      s = 0.95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
+      t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+
+  bunching = bunching.filter(b => b.terminal != "wait|4040");
+
+  maxBunching = d3.max(bunching, b => d3.max(Object.values(b.Values)));
+  color.domain([0, maxBunching]);
+
+  var tiles = tile
+      .size([width, height])
+      .scale(s)
+      .translate([t[0], t[1]])
+      ();
+
+   projection
+    .scale(s/ tau)
+    .translate([t[0], t[1]]);
+
+  bunching.forEach((data, i) => {
+    var wrapper = fullViz
+        .append("div")
+        .attr("width", width + "px")
+        .attr("height", height + "px");
+
+    createMap(wrapper, data, i);
+  });
+
+  fullWidth = width * bunching.length
+  fullHeight = height * 4
+  var bigWrapper = fullViz
+      .append("div")
+      .attr("width", fullWidth)
+      .attr("height", fullHeight);
+
+  createBigMap(bigWrapper, bunching[0], fullWidth, fullHeight);
+
+  function createMap(wrapper, data, i) {
+    var svg = wrapper.append("svg")
+        .attr("class", "small-map-wrapper")
+        .attr("width", width)
+        .attr("height", height + 20)
+
+    var map = svg.append("svg")
+        .attr("class", "small-map hover")
+        .attr("width", width)
+        .attr("height", height)
+        .on("click", function(d) {
+          d3.selectAll(".active").classed("active", false).classed("hover", true);
+          d3.select(this).classed("hover", false).classed("active", true);
+          d3.selectAll(".textbox"+i).classed("hover", false).classed("active", true);
+        });
+
+    map.append("g")
+      .selectAll("image").data(tiles).enter().append("image")
+        .attr("id", data.time_of_day)
+        .attr("xlink:href", d => "http://" + "abc"[d[1] % 3] + ".basemaps.cartocdn.com/light_nolabels/" + d[2] + "/" + d[0] + "/" + d[1] + ".png")
+        .attr("x", d => (d[0] + tiles.translate[0]) * tiles.scale)
+        .attr("y", d => (d[1] + tiles.translate[1]) * tiles.scale)
+        .attr("width", tiles.scale)
+        .attr("height", tiles.scale)
+        .on("click", function (d) {
+          updateColor(bunching.filter(b => b.time_of_day == data.time_of_day)[0]);
+        });
+
+    map.selectAll(".stops")
+        .data(topojson.feature(rt, rt.objects.stops).features)
+      .enter().append("path")
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", d => color(data.Values[d.properties.stpid]))
+        .attr("stroke-width", 2)
+        .attr("pointer-events", "visibleStroke");
+
+    var rectLayer = svg.append("g");
+    var textLayer = svg.append("g");
+
+    var text = textLayer.append("text")
+        .attr("class", "textbox" + i)
+        .attr("text-anchor", "middle")
+        .attr("x", width / 2)
+        .attr("y", height + 15)
+        .attr("font-family", "sans-serif")
+        .attr("font-weight", "bold")
+        .attr("font-size", "12px")
+        .text(data.time_of_day);
+
+    var bbox = text.node().getBBox();
+
+    var rect = rectLayer.append("rect")
+        .attr("class", "hover textbox textbox" + i)
+        .attr("rx", 3)
+        .attr("ry", 3)
+        .attr("x", bbox.x - 2)
+        .attr("y", bbox.y - 1)
+        .attr("width", bbox.width + 4)
+        .attr("height", bbox.height + 2)
+        .attr("fill", "#bbb");
+    }
+
+    function createBigMap(wrapper, data, width, height) {
+      s = 0.95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
+      t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+
+      var svg = wrapper.append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      var tile = d3.tile()
+          .size([width, height]);
+
+      var tiles = tile
+          .size([width, height])
+          .scale(s)
+          .translate([t[0], t[1]])
+          ();
+
+      projection
+          .scale(s / tau)
+          .translate([t[0], t[1]]);
+
+      svg.append("g")
+        .selectAll("image").data(tiles).enter().append("image")
+          .attr("xlink:href", d => "http://" + "abc"[d[1] % 3] + ".basemaps.cartocdn.com/light_all/" + d[2] + "/" + d[0] + "/" + d[1] + ".png")
+          .attr("x", d => (d[0] + tiles.translate[0]) * tiles.scale)
+          .attr("y", d => (d[1] + tiles.translate[1]) * tiles.scale)
+          .attr("width", tiles.scale)
+          .attr("height", tiles.scale)
+          .attr("opacity", 0.9);
+
+      svg.selectAll(".stops")
+          .data(topojson.feature(rt, rt.objects.stops).features)
+        .enter().append("path")
+          .attr("class", "big-map-path")
+          .attr("d", path)
+          .attr("fill", "none")
+          .attr("stroke", d => color(data.Values[d.properties.stpid]))
+          .attr("stroke-width", 5)
+          .attr("pointer-events", "visibleStroke")
+          .on("mouseover", function (d) {
+            d3.select(this).attr("stroke-width", 7);
+            tooltip.style("visibility", "visible")
+                .html(d.properties.stpnm + ": " + data.Values[d.properties.stpid]);
+
+            var tip = document.getElementById("tooltip")
+            var tipw = tip.offsetWidth
+            var tiph = tip.offsetHeight
+
+            var bbox = this.getBBox();
+            var matrix = this.getScreenCTM();
+            var svg = document.getElementById("mysvg");
+            var pt = svg.createSVGPoint();
+            pt.x = bbox.x  + window.scrollX + (bbox.width / 2) - (tipw / 2);
+            pt.y = bbox.y - tiph + window.scrollY;
+            var trans = pt.matrixTransform(matrix);
+
+            tooltip
+                .style("left", (trans.x) + "px")   
+                .style("top", (trans.y - 10) +  "px")
+          })
+          .on("mouseout", function (d) {
+            d3.select(this).attr("stroke-width", 5);
+            tooltip.style("visibility", "hidden");
+          });
+
+      var legend = svg.append("g")
+          .attr("class", "legend")
+          .attr("transform", "translate(20," + (height - 50) + ")");
+
+      inverseLegendY.domain(color.domain());
+      legendY.range(color.domain());
+
+      var legendAxisArea = legend.append("g")
+          .attr("class", "axis axis--y")
+          .attr("transform", "translate(0,20)")
+
+      var legendAxis = d3.axisBottom()
+        .scale(inverseLegendY)
+        .ticks(3)
+        .tickSize(0);
+
+      legendAxisArea.call(legendAxis);
+
+      legend.selectAll(".bands")
+        .data(d3.range(legendWidth), d => d)
+      .enter().append("rect")
+        .attr("x", d => d)
+        .attr("y", 10)
+        .attr("width", 1)
+        .attr("height", 10)
+        .attr("fill", d => color(legendY(d)));
+    }
+}
+
+function updateColor(data) {
+  d3.selectAll(".big-map-path")
+      .attr("stroke", d => color(data.Values[d.properties.stpid]))
+
+}
+</script>
