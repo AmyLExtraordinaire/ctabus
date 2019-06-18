@@ -58,13 +58,14 @@ div#tooltip {
   border-radius: 2px;    
   background: #000;
   opacity: 0.8;
-  font: bold 10px sans-serif;    
+  font: bold 8px sans-serif;    
   text-align: center;       
   color: #fff;
 }
 
 div#tooltip:after {
   content: "\25BC";
+  font: 10px;
   display: inline;
   line-height: 1;
   position: absolute;
@@ -104,18 +105,15 @@ var projection = d3.geoMercator()
 var path = d3.geoPath()
     .projection(projection);
 
-var tile = d3.tile()
-    .size([width, height]);
-
 var fullViz = d3.select("#vis");
 
 var legendWidth = 100;
 
 var legendY = d3.scaleLinear()
-  .domain([0, legendWidth]);
+    .domain([0, legendWidth]);
 
 var inverseLegendY = d3.scaleLinear()
-  .range([0, legendWidth]);
+    .range([0, legendWidth]);
 
 var tooltip = d3.select("body")
     .append("div")
@@ -123,52 +121,39 @@ var tooltip = d3.select("body")
     .style("visibility", "hidden");
 
 d3.queue()
-    .defer(d3.json, "73_eb.topojson")
-    .defer(d3.json, "data.json")
+    .defer(d3.json, "73_wb.topojson")
+    .defer(d3.json, "data_wb.json")
     .await(ready);
 
-function ready(error, rt, bunching) {
+function ready(error, rtEB, bunchingEB) {
   if (error) throw error;
 
-  // Apply a zoom transform equivalent to projection.{scale,translate,center}.
-	var b = path.bounds(topojson.feature(rt, rt.objects.stops)),
-      s = 0.95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
-      t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+	var bbox = path.bounds(topojson.feature(rtEB, rtEB.objects.stops)),
 
-  bunching = bunching.filter(b => b.terminal != "wait|4040");
+  bunchingEB = bunchingEB.filter(b => b.terminal != "wait|4040");
 
-  maxBunching = d3.max(bunching, b => d3.max(Object.values(b.Values)));
+  maxBunching = d3.max(bunchingEB, b => d3.max(Object.values(b.values).map(v => v.proportion)));
   color.domain([0, maxBunching]);
 
-  var tiles = tile
-      .size([width, height])
-      .scale(s)
-      .translate([t[0], t[1]])
-      ();
-
-   projection
-    .scale(s/ tau)
-    .translate([t[0], t[1]]);
-
-  bunching.forEach((data, i) => {
+  bunchingEB.forEach((data, i) => {
     var wrapper = fullViz
         .append("div")
         .attr("width", width + "px")
         .attr("height", height + "px");
 
-    createMap(wrapper, data, i);
+    drawSmallMultiples(wrapper, data, i);
   });
 
-  fullWidth = width * bunching.length
+  fullWidth = width * bunchingEB.length
   fullHeight = height * 4
   var bigWrapper = fullViz
       .append("div")
       .attr("width", fullWidth)
       .attr("height", fullHeight);
 
-  createBigMap(bigWrapper, bunching[0], fullWidth, fullHeight);
+  drawLargeMap(bigWrapper, bunchingEB[0], fullWidth, fullHeight);
 
-  function createMap(wrapper, data, i) {
+  function drawSmallMultiples(wrapper, data, i) {
     var svg = wrapper.append("svg")
         .attr("class", "small-map-wrapper")
         .attr("width", width)
@@ -179,31 +164,18 @@ function ready(error, rt, bunching) {
         .attr("width", width)
         .attr("height", height)
         .on("click", function(d) {
-          d3.selectAll(".active").classed("active", false).classed("hover", true);
-          d3.select(this).classed("hover", false).classed("active", true);
-          d3.selectAll(".textbox"+i).classed("hover", false).classed("active", true);
+          if (!d3.select(this).classed("active")) {
+            d3.selectAll(".active").classed("active", false).classed("hover", true);
+            d3.select(this).classed("hover", false).classed("active", true);
+            d3.selectAll(".textbox"+i).classed("hover", false).classed("active", true);
+            updateColor(bunchingEB.filter(b => b.time_of_day == data.time_of_day)[0]);
+          }
         });
 
-    map.append("g")
-      .selectAll("image").data(tiles).enter().append("image")
-        .attr("id", data.time_of_day)
-        .attr("xlink:href", d => "http://" + "abc"[d[1] % 3] + ".basemaps.cartocdn.com/light_nolabels/" + d[2] + "/" + d[0] + "/" + d[1] + ".png")
-        .attr("x", d => (d[0] + tiles.translate[0]) * tiles.scale)
-        .attr("y", d => (d[1] + tiles.translate[1]) * tiles.scale)
-        .attr("width", tiles.scale)
-        .attr("height", tiles.scale)
-        .on("click", function (d) {
-          updateColor(bunching.filter(b => b.time_of_day == data.time_of_day)[0]);
-        });
+    drawMap(bbox, width, height, map);
 
-    map.selectAll(".stops")
-        .data(topojson.feature(rt, rt.objects.stops).features)
-      .enter().append("path")
-        .attr("d", path)
-        .attr("fill", "none")
-        .attr("stroke", d => color(data.Values[d.properties.stpid]))
-        .attr("stroke-width", 2)
-        .attr("pointer-events", "visibleStroke");
+    var route = drawRoute(svg, data, rtEB);
+    route.attr("stroke-width", 2)
 
     var rectLayer = svg.append("g");
     var textLayer = svg.append("g");
@@ -218,116 +190,132 @@ function ready(error, rt, bunching) {
         .attr("font-size", "12px")
         .text(data.time_of_day);
 
-    var bbox = text.node().getBBox();
+    var textBBox = text.node().getBBox();
 
     var rect = rectLayer.append("rect")
         .attr("class", "hover textbox textbox" + i)
         .attr("rx", 3)
         .attr("ry", 3)
-        .attr("x", bbox.x - 2)
-        .attr("y", bbox.y - 1)
-        .attr("width", bbox.width + 4)
-        .attr("height", bbox.height + 2)
+        .attr("x", textBBox.x - 2)
+        .attr("y", textBBox.y - 1)
+        .attr("width", textBBox.width + 4)
+        .attr("height", textBBox.height + 2)
         .attr("fill", "#bbb");
+
+    if (i == 0) {
+      map.classed("active", true).classed("hover", false)
+      rect.classed("active", true).classed("hover", false)
+      text.classed("active", true).classed("hover", false)
     }
+  }
 
-    function createBigMap(wrapper, data, width, height) {
-      s = 0.95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
-      t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
-
-      var svg = wrapper.append("svg")
+  function drawLargeMap(wrapper, data, width, height) {
+    var svg = wrapper.append("svg")
+        .attr("id", "fullmap")
         .attr("width", width)
         .attr("height", height);
 
-      var tile = d3.tile()
-          .size([width, height]);
+    drawMap(bbox, width, height, svg);
 
-      var tiles = tile
-          .size([width, height])
-          .scale(s)
-          .translate([t[0], t[1]])
-          ();
+    var route = drawRoute(svg, data, rtEB);
 
-      projection
-          .scale(s / tau)
-          .translate([t[0], t[1]]);
+    route.attr("class", "big-map-path")
+        .attr("stroke-width", 5)
+        .on("mouseover", function (d) {
+          d3.select(this).attr("stroke-width", 7);
+          tooltip.style("visibility", "visible")
+              .html(d.properties.stpnm + "<br />" + data.values[d.properties.stpid].count + " incidents, " + d3.format(".0%")(data.values[d.properties.stpid].proportion) + " of trips");
 
-      svg.append("g")
-        .selectAll("image").data(tiles).enter().append("image")
-          .attr("xlink:href", d => "http://" + "abc"[d[1] % 3] + ".basemaps.cartocdn.com/light_all/" + d[2] + "/" + d[0] + "/" + d[1] + ".png")
-          .attr("x", d => (d[0] + tiles.translate[0]) * tiles.scale)
-          .attr("y", d => (d[1] + tiles.translate[1]) * tiles.scale)
-          .attr("width", tiles.scale)
-          .attr("height", tiles.scale)
-          .attr("opacity", 0.9);
+          var tip = document.getElementById("tooltip")
+          var tipw = tip.offsetWidth
+          var tiph = tip.offsetHeight
 
-      svg.selectAll(".stops")
-          .data(topojson.feature(rt, rt.objects.stops).features)
-        .enter().append("path")
-          .attr("class", "big-map-path")
-          .attr("d", path)
-          .attr("fill", "none")
-          .attr("stroke", d => color(data.Values[d.properties.stpid]))
-          .attr("stroke-width", 5)
-          .attr("pointer-events", "visibleStroke")
-          .on("mouseover", function (d) {
-            d3.select(this).attr("stroke-width", 7);
-            tooltip.style("visibility", "visible")
-                .html(d.properties.stpnm + ": " + data.Values[d.properties.stpid]);
+          var bbox = this.getBBox();
+          var matrix = this.getScreenCTM();
+          var svg = document.getElementById("fullmap");
+          var pt = svg.createSVGPoint();
+          pt.x = bbox.x  + window.scrollX + (bbox.width / 2) - (tipw / 2);
+          pt.y = bbox.y - tiph + window.scrollY;
+          var trans = pt.matrixTransform(matrix);
 
-            var tip = document.getElementById("tooltip")
-            var tipw = tip.offsetWidth
-            var tiph = tip.offsetHeight
+          tooltip
+              .style("left", (trans.x) + "px")   
+              .style("top", (trans.y - 10) +  "px")
+        })
+        .on("mouseout", function (d) {
+          d3.select(this).attr("stroke-width", 5);
+          tooltip.style("visibility", "hidden");
+        })
 
-            var bbox = this.getBBox();
-            var matrix = this.getScreenCTM();
-            var svg = document.getElementById("mysvg");
-            var pt = svg.createSVGPoint();
-            pt.x = bbox.x  + window.scrollX + (bbox.width / 2) - (tipw / 2);
-            pt.y = bbox.y - tiph + window.scrollY;
-            var trans = pt.matrixTransform(matrix);
+    var legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", "translate(20," + (height - 50) + ")");
 
-            tooltip
-                .style("left", (trans.x) + "px")   
-                .style("top", (trans.y - 10) +  "px")
-          })
-          .on("mouseout", function (d) {
-            d3.select(this).attr("stroke-width", 5);
-            tooltip.style("visibility", "hidden");
-          });
+    inverseLegendY.domain(color.domain());
+    legendY.range(color.domain());
 
-      var legend = svg.append("g")
-          .attr("class", "legend")
-          .attr("transform", "translate(20," + (height - 50) + ")");
+    var legendAxisArea = legend.append("g")
+        .attr("class", "axis axis--y")
+        .attr("transform", "translate(0,15)")
 
-      inverseLegendY.domain(color.domain());
-      legendY.range(color.domain());
+    var legendAxis = d3.axisBottom()
+      .scale(inverseLegendY)
+      .tickValues([0, maxBunching / 2, maxBunching])
+      .tickSize(3)
+      .tickFormat(d3.format(".0%"))
 
-      var legendAxisArea = legend.append("g")
-          .attr("class", "axis axis--y")
-          .attr("transform", "translate(0,20)")
+    legendAxisArea.call(legendAxis);
 
-      var legendAxis = d3.axisBottom()
-        .scale(inverseLegendY)
-        .ticks(3)
-        .tickSize(0);
-
-      legendAxisArea.call(legendAxis);
-
-      legend.selectAll(".bands")
+    legend.selectAll(".bands")
         .data(d3.range(legendWidth), d => d)
       .enter().append("rect")
         .attr("x", d => d)
         .attr("y", 10)
         .attr("width", 1)
-        .attr("height", 10)
+        .attr("height", 5)
         .attr("fill", d => color(legendY(d)));
-    }
+  }
+}
+
+function drawMap(b, width, height, svg) {
+  var s = 0.95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
+      t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+
+  var tiles = d3.tile()
+      .size([width, height])
+      .scale(s)
+      .translate([t[0], t[1]])
+      ();
+
+  projection
+      .scale(s / tau)
+      .translate([t[0], t[1]]);
+
+  var map = svg.append("g")
+    .selectAll("image").data(tiles).enter().append("image")
+      .attr("xlink:href", d => "http://" + "abc"[d[1] % 3] + ".basemaps.cartocdn.com/light_all/" + d[2] + "/" + d[0] + "/" + d[1] + ".png")
+      .attr("x", d => (d[0] + tiles.translate[0]) * tiles.scale)
+      .attr("y", d => (d[1] + tiles.translate[1]) * tiles.scale)
+      .attr("width", tiles.scale)
+      .attr("height", tiles.scale);
+
+  return map;
+}
+
+function drawRoute(svg, data, rtEB) {
+  var route = svg.selectAll(".stops")
+      .data(topojson.feature(rtEB, rtEB.objects.stops).features)
+    .enter().append("path")
+      .attr("d", path)
+      .attr("fill", "none")
+      .attr("stroke", d => color(data.values[d.properties.stpid].proportion))
+      .attr("pointer-events", "visibleStroke");
+
+  return route;
 }
 
 function updateColor(data) {
   d3.selectAll(".big-map-path")
-      .attr("stroke", d => color(data.Values[d.properties.stpid]))
-
+      .attr("stroke", d => color(data.values[d.properties.stpid].proportion));
 }
 </script>
