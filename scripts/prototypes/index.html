@@ -82,13 +82,13 @@ div#tooltip:after {
 </style>
 <div id="vis"></div>
 <div id="test"></div>
+<div id="clickWB">WB!</div>
+<div id="clickEB">EB!</div>
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//d3js.org/d3-tile.v0.0.min.js"></script>
 <script src="//d3js.org/topojson.v1.min.js"></script>
 <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 <script>
-var busstops_eb = [];
-
 var pi = Math.PI,
     tau = 2 * pi;
 
@@ -97,13 +97,19 @@ var width = Math.min(150, window.innerWidth),
 
 var color = d3.scaleSequential(d3.interpolateMagma);
 
+var maxBunching;
+
 // Initialize the projection to fit the world in a 1×1 square centered at the origin.
-var projection = d3.geoMercator()
+var smallProjection = d3.geoMercator()
     .scale(1 / tau)
     .translate([0, 0]);
 
-var path = d3.geoPath()
-    .projection(projection);
+var bigProjection = d3.geoMercator()
+    .scale(1 / tau)
+    .translate([0, 0]);
+
+var path = d3.geoPath();
+    //.projection();
 
 var fullViz = d3.select("#vis");
 
@@ -123,43 +129,32 @@ var tooltip = d3.select("body")
 d3.queue()
     .defer(d3.json, "73_wb.topojson")
     .defer(d3.json, "data_wb.json")
+    .defer(d3.json, "73_eb.topojson")
+    .defer(d3.json, "data_eb.json")
     .await(ready);
 
-function ready(error, rtEB, bunchingEB) {
+function ready(error, rtWB, bunchingWB, rtEB, bunchingEB) {
   if (error) throw error;
 
-	var bbox = path.bounds(topojson.feature(rtEB, rtEB.objects.stops)),
+	var bbox = path.projection(smallProjection).bounds(topojson.feature(rtEB, rtEB.objects.stops)),
 
   bunchingEB = bunchingEB.filter(b => b.terminal != "wait|4040");
 
-  maxBunching = d3.max(bunchingEB, b => d3.max(Object.values(b.values).map(v => v.proportion)));
-  color.domain([0, maxBunching]);
+  updateColorScale(bunchingEB);
 
-  bunchingEB.forEach((data, i) => {
+  bunchingEB.forEach((_, i) => {
     var wrapper = fullViz
         .append("div")
         .attr("width", width + "px")
         .attr("height", height + "px");
 
-    drawSmallMultiples(wrapper, data, i);
-  });
-
-  fullWidth = width * bunchingEB.length
-  fullHeight = height * 4
-  var bigWrapper = fullViz
-      .append("div")
-      .attr("width", fullWidth)
-      .attr("height", fullHeight);
-
-  drawLargeMap(bigWrapper, bunchingEB[0], fullWidth, fullHeight);
-
-  function drawSmallMultiples(wrapper, data, i) {
-    var svg = wrapper.append("svg")
+    var smallMap = wrapper.append("svg")
         .attr("class", "small-map-wrapper")
+        .attr("id", "small-map-wrapper" + i)
         .attr("width", width)
-        .attr("height", height + 20)
+        .attr("height", height + 20);
 
-    var map = svg.append("svg")
+    var map = smallMap.append("svg")
         .attr("class", "small-map hover")
         .attr("width", width)
         .attr("height", height)
@@ -172,112 +167,36 @@ function ready(error, rtEB, bunchingEB) {
           }
         });
 
-    drawMap(bbox, width, height, map);
+    drawMap(bbox, width, height, smallProjection, map);
+  });
 
-    var route = drawRoute(svg, data, rtEB);
-    route.attr("stroke-width", 2)
 
-    var rectLayer = svg.append("g");
-    var textLayer = svg.append("g");
+  drawSmallMultiples(bunchingWB, rtWB, smallProjection);
 
-    var text = textLayer.append("text")
-        .attr("class", "textbox" + i)
-        .attr("text-anchor", "middle")
-        .attr("x", width / 2)
-        .attr("y", height + 15)
-        .attr("font-family", "sans-serif")
-        .attr("font-weight", "bold")
-        .attr("font-size", "12px")
-        .text(data.time_of_day);
+  var fullWidth = width * bunchingEB.length
+  var fullHeight = height * 4
+  var bigWrapper = fullViz
+      .append("div")
+      .attr("width", fullWidth)
+      .attr("height", fullHeight);
 
-    var textBBox = text.node().getBBox();
-
-    var rect = rectLayer.append("rect")
-        .attr("class", "hover textbox textbox" + i)
-        .attr("rx", 3)
-        .attr("ry", 3)
-        .attr("x", textBBox.x - 2)
-        .attr("y", textBBox.y - 1)
-        .attr("width", textBBox.width + 4)
-        .attr("height", textBBox.height + 2)
-        .attr("fill", "#bbb");
-
-    if (i == 0) {
-      map.classed("active", true).classed("hover", false)
-      rect.classed("active", true).classed("hover", false)
-      text.classed("active", true).classed("hover", false)
-    }
-  }
-
-  function drawLargeMap(wrapper, data, width, height) {
-    var svg = wrapper.append("svg")
+  var bigMap = bigWrapper.append("svg")
         .attr("id", "fullmap")
-        .attr("width", width)
-        .attr("height", height);
+        .attr("width", fullWidth)
+        .attr("height", fullHeight);
 
-    drawMap(bbox, width, height, svg);
+  drawMap(bbox, fullWidth, fullHeight, bigProjection, bigMap);
+  drawFigure(bunchingEB[0], rtEB, bigProjection);
 
-    var route = drawRoute(svg, data, rtEB);
-
-    route.attr("class", "big-map-path")
-        .attr("stroke-width", 5)
-        .on("mouseover", function (d) {
-          d3.select(this).attr("stroke-width", 7);
-          tooltip.style("visibility", "visible")
-              .html(d.properties.stpnm + "<br />" + data.values[d.properties.stpid].count + " incidents, " + d3.format(".0%")(data.values[d.properties.stpid].proportion) + " of trips");
-
-          var tip = document.getElementById("tooltip")
-          var tipw = tip.offsetWidth
-          var tiph = tip.offsetHeight
-
-          var bbox = this.getBBox();
-          var matrix = this.getScreenCTM();
-          var svg = document.getElementById("fullmap");
-          var pt = svg.createSVGPoint();
-          pt.x = bbox.x  + window.scrollX + (bbox.width / 2) - (tipw / 2);
-          pt.y = bbox.y - tiph + window.scrollY;
-          var trans = pt.matrixTransform(matrix);
-
-          tooltip
-              .style("left", (trans.x) + "px")   
-              .style("top", (trans.y - 10) +  "px")
-        })
-        .on("mouseout", function (d) {
-          d3.select(this).attr("stroke-width", 5);
-          tooltip.style("visibility", "hidden");
-        })
-
-    var legend = svg.append("g")
-        .attr("class", "legend")
-        .attr("transform", "translate(20," + (height - 50) + ")");
-
-    inverseLegendY.domain(color.domain());
-    legendY.range(color.domain());
-
-    var legendAxisArea = legend.append("g")
-        .attr("class", "axis axis--y")
-        .attr("transform", "translate(0,15)")
-
-    var legendAxis = d3.axisBottom()
-      .scale(inverseLegendY)
-      .tickValues([0, maxBunching / 2, maxBunching])
-      .tickSize(3)
-      .tickFormat(d3.format(".0%"))
-
-    legendAxisArea.call(legendAxis);
-
-    legend.selectAll(".bands")
-        .data(d3.range(legendWidth), d => d)
-      .enter().append("rect")
-        .attr("x", d => d)
-        .attr("y", 10)
-        .attr("width", 1)
-        .attr("height", 5)
-        .attr("fill", d => color(legendY(d)));
-  }
+  d3.select("#clickEB").on("click", function (d) {
+      update(bunchingEB, rtEB)
+  });
+  d3.select("#clickWB").on("click", function (d) {
+      update(bunchingWB, rtWB)
+  });
 }
 
-function drawMap(b, width, height, svg) {
+function drawMap(b, width, height, projection, svg) {
   var s = 0.95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
       t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
 
@@ -302,11 +221,11 @@ function drawMap(b, width, height, svg) {
   return map;
 }
 
-function drawRoute(svg, data, rtEB) {
+function drawRoute(svg, data, geometry, projection) {
   var route = svg.selectAll(".stops")
-      .data(topojson.feature(rtEB, rtEB.objects.stops).features)
+      .data(topojson.feature(geometry, geometry.objects.stops).features)
     .enter().append("path")
-      .attr("d", path)
+      .attr("d", path.projection(projection))
       .attr("fill", "none")
       .attr("stroke", d => color(data.values[d.properties.stpid].proportion))
       .attr("pointer-events", "visibleStroke");
@@ -314,8 +233,130 @@ function drawRoute(svg, data, rtEB) {
   return route;
 }
 
+function updateColorScale(data) {
+  maxBunching = d3.max(data, b => d3.max(Object.values(b.values).map(v => v.proportion)));
+  color.domain([0, maxBunching]);
+}
+
 function updateColor(data) {
   d3.selectAll(".big-map-path")
       .attr("stroke", d => color(data.values[d.properties.stpid].proportion));
+}
+
+function drawSmallMultiples(data, geometry, projection) {
+  data.forEach((d, i) => {
+    var smallMap = d3.select("#small-map-wrapper" + i);
+    drawSmallFigure(smallMap, d, i, geometry, projection);
+  });
+}
+
+function drawSmallFigure(svg, data, i, geometry, projection) {
+  svg = svg.append("g").attr("class", "small-multiple");
+
+  var route = drawRoute(svg, data, geometry, projection);
+
+  route.attr("stroke-width", 2)
+
+  var rectLayer = svg.append("g");
+  var textLayer = svg.append("g");
+
+  var text = textLayer.append("text")
+      .attr("class", "textbox" + i)
+      .attr("text-anchor", "middle")
+      .attr("x", width / 2)
+      .attr("y", height + 15)
+      .attr("font-family", "sans-serif")
+      .attr("font-weight", "bold")
+      .attr("font-size", "12px")
+      .text(data.time_of_day);
+
+  var textBBox = text.node().getBBox();
+
+  var rect = rectLayer.append("rect")
+      .attr("class", "hover textbox textbox" + i)
+      .attr("rx", 3)
+      .attr("ry", 3)
+      .attr("x", textBBox.x - 2)
+      .attr("y", textBBox.y - 1)
+      .attr("width", textBBox.width + 4)
+      .attr("height", textBBox.height + 2)
+      .attr("fill", "#bbb");
+
+  if (i == 0) {
+    //map.classed("active", true).classed("hover", false)
+    rect.classed("active", true).classed("hover", false)
+    text.classed("active", true).classed("hover", false)
+  }
+}
+
+function drawFigure(data, geometry, projection) {
+  var svg = d3.select("#fullmap")
+  svg = svg.append("g").attr("class", "big-figure");
+
+  var route = drawRoute(svg, data, geometry, projection);
+
+  route.attr("class", "big-map-path")
+      .attr("stroke-width", 5)
+      .on("mouseover", function (d) {
+        d3.select(this).attr("stroke-width", 7);
+        tooltip.style("visibility", "visible")
+            .html(d.properties.stpnm + "<br />" + data.values[d.properties.stpid].count + " incidents, " + d3.format(".0%")(data.values[d.properties.stpid].proportion) + " of trips");
+
+        var tip = document.getElementById("tooltip")
+        var tipw = tip.offsetWidth
+        var tiph = tip.offsetHeight
+
+        var bbox = this.getBBox();
+        var matrix = this.getScreenCTM();
+        var svg = document.getElementById("fullmap");
+        var pt = svg.createSVGPoint();
+        pt.x = bbox.x  + window.scrollX + (bbox.width / 2) - (tipw / 2);
+        pt.y = bbox.y - tiph + window.scrollY;
+        var trans = pt.matrixTransform(matrix);
+
+        tooltip
+            .style("left", (trans.x) + "px")   
+            .style("top", (trans.y - 10) +  "px")
+      })
+      .on("mouseout", function (d) {
+        d3.select(this).attr("stroke-width", 5);
+        tooltip.style("visibility", "hidden");
+      })
+
+  var legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", "translate(20," + (height - 50) + ")");
+
+  inverseLegendY.domain(color.domain());
+  legendY.range(color.domain());
+
+  var legendAxisArea = legend.append("g")
+      .attr("class", "axis axis--y")
+      .attr("transform", "translate(0,15)")
+
+  var legendAxis = d3.axisBottom()
+    .scale(inverseLegendY)
+    .tickValues([0, maxBunching / 2, maxBunching])
+    .tickSize(3)
+    .tickFormat(d3.format(".0%"))
+
+  legendAxisArea.call(legendAxis);
+
+  legend.selectAll(".bands")
+      .data(d3.range(legendWidth), d => d)
+    .enter().append("rect")
+      .attr("x", d => d)
+      .attr("y", 10)
+      .attr("width", 1)
+      .attr("height", 5)
+      .attr("fill", d => color(legendY(d)));
+}
+
+function update(data, geometry) {
+  d3.selectAll(".big-figure").remove();
+  d3.selectAll(".small-multiple").remove();
+  updateColorScale(data);
+  drawSmallMultiples(data, geometry, smallProjection);
+  drawFigure(data[0], geometry, bigProjection); 
 }
 </script>
