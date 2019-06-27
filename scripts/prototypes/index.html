@@ -25,24 +25,24 @@ rect.textbox {
   opacity: 0;
 }
 
-.small-map-wrapper:hover .small-map.hover {
+.inactive:hover .small-map {
   opacity: 0.8;
 }
 
-.small-map-wrapper:hover rect.hover {
+.inactive:hover rect, .update-inactive:hover rect {
   opacity: 0.3; 
 }
 
-svg.active {
+.active svg {
   opacity: 1;
 }
 
-rect.active {
+.active rect, .update-active rect {
   opacity: 1;
   fill: #333;
 }
 
-text.active {
+.active text, .update-active text {
   fill: white;
 }
 
@@ -82,8 +82,6 @@ div#tooltip:after {
 </style>
 <div id="vis"></div>
 <div id="test"></div>
-<div id="clickWB">WB!</div>
-<div id="clickEB">EB!</div>
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//d3js.org/d3-tile.v0.0.min.js"></script>
 <script src="//d3js.org/topojson.v1.min.js"></script>
@@ -99,7 +97,7 @@ var color = d3.scaleSequential(d3.interpolateMagma);
 
 var maxBunching;
 
-// Initialize the projection to fit the world in a 1×1 square centered at the origin.
+// Unit projection
 var smallProjection = d3.geoMercator()
     .scale(1 / tau)
     .translate([0, 0]);
@@ -136,42 +134,29 @@ d3.queue()
 function ready(error, rtWB, bunchingWB, rtEB, bunchingEB) {
   if (error) throw error;
 
-	var bbox = path.projection(smallProjection).bounds(topojson.feature(rtEB, rtEB.objects.stops)),
+	var bbox = path.projection(smallProjection).bounds(topojson.feature(rtEB, rtEB.objects.stops));
 
   bunchingEB = bunchingEB.filter(b => b.terminal != "wait|4040");
 
-  updateColorScale(bunchingEB);
-
-  bunchingEB.forEach((_, i) => {
+  bunchingEB.forEach((data, i) => {
     var wrapper = fullViz
         .append("div")
-        .attr("width", width + "px")
-        .attr("height", height + "px");
+        .attr("width", width)
+        .attr("height", height + 20);
 
-    var smallMap = wrapper.append("svg")
-        .attr("class", "small-map-wrapper")
+    var figure = wrapper.append("svg")
+        .attr("class", i ? " inactive" : " active")
         .attr("id", "small-map-wrapper" + i)
         .attr("width", width)
         .attr("height", height + 20);
 
-    var map = smallMap.append("svg")
-        .attr("class", "small-map hover")
+    var map = figure.append("svg")
+        .attr("class", "small-map")
         .attr("width", width)
-        .attr("height", height)
-        .on("click", function(d) {
-          if (!d3.select(this).classed("active")) {
-            d3.selectAll(".active").classed("active", false).classed("hover", true);
-            d3.select(this).classed("hover", false).classed("active", true);
-            d3.selectAll(".textbox"+i).classed("hover", false).classed("active", true);
-            updateColor(bunchingEB.filter(b => b.time_of_day == data.time_of_day)[0]);
-          }
-        });
+        .attr("height", height);
 
     drawMap(bbox, width, height, smallProjection, map);
   });
-
-
-  drawSmallMultiples(bunchingWB, rtWB, smallProjection);
 
   var fullWidth = width * bunchingEB.length
   var fullHeight = height * 4
@@ -186,14 +171,30 @@ function ready(error, rtWB, bunchingWB, rtEB, bunchingEB) {
         .attr("height", fullHeight);
 
   drawMap(bbox, fullWidth, fullHeight, bigProjection, bigMap);
-  drawFigure(bunchingEB[0], rtEB, bigProjection);
 
-  d3.select("#clickEB").on("click", function (d) {
-      update(bunchingEB, rtEB)
-  });
-  d3.select("#clickWB").on("click", function (d) {
-      update(bunchingWB, rtWB)
-  });
+  var buttonWB = drawTextButton(bigMap, 30, fullHeight - 10, "&#8592 WB", "bold 16px sans-serif");
+
+  buttonWB
+      .attr("class", "update-inactive")
+      .on("click", function (d) {
+        update(bunchingWB, rtWB);
+        if(!d3.select(this).classed("update-active")) {
+          toggleClasses("update-active", "update-inactive", d3.select(this));
+        }
+      });
+
+  var buttonEB = drawTextButton(bigMap, fullWidth - 30, fullHeight - 10, "EB &#8594", "bold 16px sans-serif");
+
+  buttonEB
+      .attr("class", "update-active")
+      .on("click", function (d) {
+        update(bunchingEB, rtEB);
+        if(!d3.select(this).classed("update-active")) {
+          toggleClasses("update-active", "update-inactive", d3.select(this));
+        }
+      });
+
+  update(bunchingEB, rtEB)
 }
 
 function drawMap(b, width, height, projection, svg) {
@@ -246,34 +247,37 @@ function updateColor(data) {
 function drawSmallMultiples(data, geometry, projection) {
   data.forEach((d, i) => {
     var smallMap = d3.select("#small-map-wrapper" + i);
-    drawSmallFigure(smallMap, d, i, geometry, projection);
+    drawSmallFigure(smallMap, d, geometry, projection);
   });
 }
 
-function drawSmallFigure(svg, data, i, geometry, projection) {
-  svg = svg.append("g").attr("class", "small-multiple");
+function drawSmallFigure(svg, data, geometry, projection) {
+  svg = svg.append("g").attr("class", "small-figure-info");
 
   var route = drawRoute(svg, data, geometry, projection);
 
   route.attr("stroke-width", 2)
 
-  var rectLayer = svg.append("g");
-  var textLayer = svg.append("g");
+  var button = drawTextButton(svg, width / 2, height + 15, data.time_of_day, "bold 12px sans-serif");
+}
+
+function drawTextButton(svg, x, y, text, font) {
+  var button = svg.append("g");
+  var rectLayer = button.append("g");
+  var textLayer = button.append("g");
 
   var text = textLayer.append("text")
-      .attr("class", "textbox" + i)
       .attr("text-anchor", "middle")
-      .attr("x", width / 2)
-      .attr("y", height + 15)
-      .attr("font-family", "sans-serif")
-      .attr("font-weight", "bold")
-      .attr("font-size", "12px")
-      .text(data.time_of_day);
+      .attr("x", x)
+      .attr("y", y)
+      .style("font", font)
+      .html(text)
+      .style("cursor", "pointer");
 
   var textBBox = text.node().getBBox();
 
   var rect = rectLayer.append("rect")
-      .attr("class", "hover textbox textbox" + i)
+      .attr("class", "textbox")
       .attr("rx", 3)
       .attr("ry", 3)
       .attr("x", textBBox.x - 2)
@@ -282,11 +286,7 @@ function drawSmallFigure(svg, data, i, geometry, projection) {
       .attr("height", textBBox.height + 2)
       .attr("fill", "#bbb");
 
-  if (i == 0) {
-    //map.classed("active", true).classed("hover", false)
-    rect.classed("active", true).classed("hover", false)
-    text.classed("active", true).classed("hover", false)
-  }
+  return button;
 }
 
 function drawFigure(data, geometry, projection) {
@@ -352,11 +352,26 @@ function drawFigure(data, geometry, projection) {
       .attr("fill", d => color(legendY(d)));
 }
 
+function toggleClasses(a, b, e) {
+  d3.selectAll("." + a).classed(a, false).classed(b, true);
+  e.classed(a, true).classed(b, false);
+}
+
 function update(data, geometry) {
   d3.selectAll(".big-figure").remove();
-  d3.selectAll(".small-multiple").remove();
+  d3.selectAll(".small-figure-info").remove();
   updateColorScale(data);
   drawSmallMultiples(data, geometry, smallProjection);
-  drawFigure(data[0], geometry, bigProjection); 
+  drawFigure(data[0], geometry, bigProjection);
+
+  data.forEach((row, i) => {
+  d3.select("#small-map-wrapper" + i)
+      .on("click", function(d) {
+        if(!d3.select(this).classed("active")) {
+          toggleClasses("active", "inactive", d3.select(this));
+          updateColor(data.filter(b => b.time_of_day == row.time_of_day)[0]);
+        }
+      });
+  });
 }
 </script>
