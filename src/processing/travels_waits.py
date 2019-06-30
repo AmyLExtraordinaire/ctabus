@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 import json
 import glob
-import os
+import os.path
 import tools
 import definitions
 

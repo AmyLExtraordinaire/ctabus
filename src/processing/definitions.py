@@ -17,6 +17,7 @@ VEHICLES_DIR = os.path.join(RAW_DATA_DIR, "getvehicles")
 TIMETABLES_DIR = os.path.join(PROCESSED_DATA_DIR, "timetables")
 TRAVELS_WAITS_DIR = os.path.join(PROCESSED_DATA_DIR, "travels_waits")
 BUNCHING_DIR = os.path.join(PROCESSED_DATA_DIR, "bunching")
+GEOMETRY_DIR = os.path.join(PROCESSED_DATA_DIR, "geometry")
 
 ## Date/Time Definitions 
 CTA_TIME_PERIODS = [6, 9, 15, 19, 22]

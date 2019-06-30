@@ -60,6 +60,7 @@ def load_patterns(rt, waypoints):
 
 def load_timetable(rt, tag):
   timetable_path = os.path.join(definitions.TIMETABLES_DIR, "{}_{}_timetable.csv".format(rt, tag))
+  
   timetable = pd.read_csv(timetable_path)
   patterns = load_patterns(rt, False)
   stop_list = list(patterns.stpid.unique())

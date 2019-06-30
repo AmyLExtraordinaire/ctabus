@@ -68,7 +68,7 @@ def build_interpolation_table(df, stop, patterns):
 
   pid_to_pdist = patterns[patterns.stpid == stop].groupby('pid').pdist.first()
   mask = table.pid.isin(pid_to_pdist.index)
-  table.loc[mask, "stop_pdist"] = table[mask].pid.map(pid_to_pdist)
+  table.lo  c[mask, "stop_pdist"] = table[mask].pid.map(pid_to_pdist)
 
   return table
 
