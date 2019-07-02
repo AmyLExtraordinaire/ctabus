@@ -53,8 +53,8 @@ The current project website and its visualizations focus on bus location data co
 ├── data
 │   └── processed				# final data sets used in visualizations and analysis
 ├── flask-bokeh_site				# old flask site with bokeh visualizations
-├── notebooks				# jupyter notebooks with data analysis
-├── references				# reference documents
+├── notebooks					# jupyter notebooks with data analysis
+├── references					# reference documents
 ├── scripts					# D3.js visualizations for current project page
 ├── src						# source code for project
 │   ├── processing				# data processing scripts

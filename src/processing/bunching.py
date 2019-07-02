@@ -32,7 +32,7 @@ def process(df):
   rt_bunching = bunching_incidents / tot_trips
 
   melted = pd.melt(bunching_incidents.reset_index(), id_vars=["time_of_day", "origin"], value_vars=terminals, var_name="terminal", value_name="count")
-  melted["count"] = melted["count"].astype(int)
+  melted["count"] = melted["count"].fillna(0).astype(int)
   melted2 = pd.melt(rt_bunching.reset_index(), id_vars=["time_of_day", "origin"], value_vars=terminals, var_name="terminal", value_name="proportion")
   melted2.proportion = melted2.proportion.fillna(0).map(lambda x: round(x, 2))
   merged = melted.merge(melted2, on=["time_of_day", "origin", "terminal"])
