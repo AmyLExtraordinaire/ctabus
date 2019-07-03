@@ -117,3 +117,4 @@ dmypy.json
 # other, personal and project files
 keys.config
 data/raw/
+data/processed/
