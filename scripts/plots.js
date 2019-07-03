@@ -115,7 +115,7 @@ waitPlot.append("g")
 		.text("Wait Time (min)");
 
 // loads list of bus stops and populates dropdown menus
-d3.json("data/processed/stop_lists/55_stop_list.json", function(error, stopList) {
+d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stopList) {
 	if (error) throw error;
 
 	/**
@@ -261,7 +261,7 @@ function update() {
 	}
 
 	// Load trip and wait time data
-	var dataPath = "data/processed/travels_waits/55/" + origin[0] + "_" + direction + ".csv";
+	var dataPath = "data/project_page/travels_waits/55/" + origin[0] + "_" + direction + ".csv";
 	d3.csv(dataPath, type, function(error, data) {
 		/**
 		 * FIXME: when data re-processed, rename columns "start" and "stop" to
