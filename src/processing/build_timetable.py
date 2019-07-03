@@ -27,7 +27,7 @@ def create_unique_ids(df):
   g = df.groupby(["tatripid", (df.tmstmp.diff() > pd.Timedelta('30 minutes')).astype(int).cumsum()])
   idxmins = g.unix_tmstmp.idxmin()
   df_idxmins = df.loc[idxmins]
-  df.loc[idxmins, "ID"] = (df_idxmins.tmstmp - pd.DateOffset(hours=3)).dt.strftime('%Y%m%d') + "_" + df_idxmins.pid + "_" + df_idxmins.tatripid
+  df.loc[idxmins, "ID"] = (df_idxmins.tmstmp - pd.DateOffset(hours=3)).dt.strftime('%Y%m%d') + "_" + df_idxmins.pid.astype(str) + "_" + df_idxmins.tatripid
   df.ID.ffill(inplace=True)
 
 def remove_short_trips(df):
@@ -68,7 +68,7 @@ def build_interpolation_table(df, stop, patterns):
 
   pid_to_pdist = patterns[patterns.stpid == stop].groupby('pid').pdist.first()
   mask = table.pid.isin(pid_to_pdist.index)
-  table.lo  c[mask, "stop_pdist"] = table[mask].pid.map(pid_to_pdist)
+  table.loc[mask, "stop_pdist"] = table[mask].pid.map(pid_to_pdist)
 
   return table
 
@@ -93,6 +93,7 @@ def build_timetable(df, patterns):
 
   timetable.reset_index(inplace=True)
   timetable[["start_date", "pid", "tatripid"]] = timetable.ID.str.split("_", expand=True)
+  timetable.pid = timetable.pid.astype(int)
   timetable.drop(columns='ID', inplace=True)
   timetable["rtdir"] = timetable.pid.map(patterns.groupby('pid').rtdir.first())
   timetable["start_date"] = pd.to_datetime(timetable.start_date)
@@ -126,4 +127,4 @@ if __name__ == '__main__':
   parser.add_argument('-s', '--start')
   parser.add_argument('-e', '--end')
   args = parser.parse_args()
-  main(args.db, args.rt, args.steart, args.end)
+  main(args.rt, args.tag, args.start, args.end)

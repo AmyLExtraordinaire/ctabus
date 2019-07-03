@@ -24,7 +24,7 @@ def get_patterns(pids, rt):
     patterns = r.json().get('bustime-response').get('ptr')
           
     for pattern in patterns:
-      pid = str(pattern['pid'])
+      pid = pattern['pid']
       pattern_path = os.path.join(definitions.PATTERNS_DIR, "{}_{}.json".format(rt, pid))
       with open(pattern_path, 'w') as out_file:
         json.dump(pattern, out_file)
@@ -38,6 +38,7 @@ def main(db_path, rt):
   with sqlite3.connect(db_path) as conn:
     sql = "SELECT DISTINCT pid FROM vehicles;"
     pids_df = pd.read_sql_query(sql, conn)
+  pids_df.pid = pids_df.pid.astype(str)
   get_patterns(pids_df.pid, rt)
 
 if __name__ == '__main__':

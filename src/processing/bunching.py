@@ -42,7 +42,7 @@ def process(df):
 
 def write_bunching(bunching, rt, rtdir):
   tools.check_if_path_exists(definitions.BUNCHING_DIR)
-  out_path = os.path.join(definitions.BUNCHING_DIR, "{}_{}_bunching.csv".format(rt, rtdir))
+  out_path = os.path.join(definitions.BUNCHING_DIR, "{}_{}_bunching.json".format(rt, rtdir))
   bunching.to_json(out_path, orient='records')
 
 def main(rt, rtdir):
