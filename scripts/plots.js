@@ -120,18 +120,9 @@ waitPlot.append("g")
 
 // loads list of bus stops and populates dropdown menus
 d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stops) {
-//d3.json("data/project_page/geometry/55_5424.topojson", function(error, stopList) {
 	if (error) throw error;
 
-	/**
-	 * FIXME: when future bus routes are added, shouldn't populate stop list from
-	 * only stops in the negative (i.e. southbound or westbound) direction
-	 */
-	
-	//var stopNames = Object.keys(stopList['negative']);
 	stopList = stops;
-	var stopNames = stops["Westbound"];
-	console.log(stopNames)
 
 	// creates each dropdown menu
 	d3.select("#direction-select")
@@ -140,25 +131,6 @@ d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stops)
 		.enter().append("option")
 			.attr("value", d => d)
 			.text(d => d);
-	
-	// creates each dropdown menu
-	d3.select("#origin-select")
-		.selectAll("option")
-			.data(stopNames)
-		.enter().append("option")
-			.attr("value", d => d.stpid)
-			.attr("class", "origin-stops")
-			.attr("id", d => "origin-" + d.stpid)
-			.text(d => d.stpnm);
-
-	d3.select("#destination-select")
-		.selectAll("option")
-			.data(stopNames)
-		.enter().append("option")
-			.attr("value", d => d.stpid)
-			.attr("class", "destination-stops")
-			.attr("id", d => "destination-" + d.stpid)
-			.text(d => d.stpnm);
 
 	d3.select("#day-select")
 		.selectAll("option")
@@ -184,7 +156,8 @@ d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stops)
 			.attr("value", d => d)
 			.text(d => d);
 
-	
+	updateDropdownValues(stops, defaultValues.direction);
+
 	var directionDropDown = d3.select("#direction-select");
 	var originDropDown = d3.select("#origin-select");
 	var destinationDropDown = d3.select("#destination-select");
@@ -198,64 +171,75 @@ d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stops)
 	hourSelect.property("value", defaultValues.hour);
 	minuteSelect.property("value", defaultValues.minute);
 
+	// update origin and destination options on route direction change
+	directionDropDown.on("change", () => {
+		originDropDown.selectAll("option").remove();
+		destinationDropDown.selectAll("option").remove();
+		updateDropdownValues(stops, d3.event.target.value);
+	})
+
+	update();
+});
+
+function updateDropdownValues(data, rtdir) {
+	var originDropDown = d3.select("#origin-select");
+	var destinationDropDown = d3.select("#destination-select");
+
+	// creates each dropdown menu
+	originDropDown
+		.selectAll("option")
+			.data(data[rtdir])
+		.enter().append("option")
+			.attr("value", d => d.stpid)
+			.attr("class", "origin-stops")
+			.attr("id", (_, i) => "origin-" + i)
+			.text(d => d.stpnm);
+
+	destinationDropDown
+		.selectAll("option")
+			.data(data[rtdir])
+		.enter().append("option")
+			.attr("value", d => d.stpid)
+			.attr("class", "destination-stops")
+			.attr("id", (_, i) => "destination-" + i)
+			.text(d => d.stpnm);
+
+	var originSelect = originDropDown.node()
+	var destinationSelect = destinationDropDown.node()
+	originSelect.selectedIndex = 0;
+	destinationSelect.selectedIndex = originSelect.options.length - 1;
+
 	/**
 	 * hides default destination bus stop from origin drop down and vice versa 
 	 * note: this is important! user shouldn't be able to select the same origin and destination
 	 * stops since the bus doesn't move! 
 	 */
-	originDropDown.select("#origin-" + defaultValues.destination)
-			.classed("origin-hidden", true)
+
+	originDropDown.select("#origin-" + (originSelect.options.length - 1))
+			.classed("origin-always-hidden", true)
 			.attr("hidden", true);
 
-	destinationDropDown.select("#destination-" + defaultValues.origin)
-			.classed("destination-hidden", true)
+	destinationDropDown.select("#destination-0")
+			.classed("destination-always-hidden", true)
 			.attr("hidden", true);
 
-	// update origin and destination options on route direction change
-	directionDropDown.on("change", () => {
-		originDropDown.selectAll("option").remove();
-		originDropDown.selectAll("option")
-			.data(stops[d3.event.target.value])
-		.enter().append("option")
-			.attr("value", d => d.stpid)
-			.attr("class", "origin-stops")
-			.attr("id", d => "origin-" + d.stpid)
-			.text(d => d.stpnm);
-
-		destinationDropDown.selectAll("option").remove();
-		destinationDropDown.selectAll("option")
-			.data(stops[d3.event.target.value])
-		.enter().append("option")
-			.attr("value", d => d.stpid)
-			.attr("class", "origin-stops")
-			.attr("id", d => "origin-" + d.stpid)
-			.text(d => d.stpnm);
-	})
-
-	// when origin selection changes, hides new selection from destination dropdown
+	// when origin selection changes, hides invalid selections from destination dropdown
 	originDropDown.on("change", () => {
-		destinationDropDown.select(".destination-hidden")
+		destinationDropDown.selectAll(".destination-hidden")
 				.classed("destination-hidden", false)
 				.attr("hidden", null);
 
-		destinationDropDown.select("#destination-" + d3.event.target.value)
+		if (d3.event.target.selectedIndex >= destinationSelect.selectedIndex) {
+			destinationDropDown.node().selectedIndex =	d3.event.target.selectedIndex + 1
+		}
+
+		for (i = 0; i <= d3.event.target.selectedIndex; i++) {
+			destinationDropDown.select("#destination-" + i)
 				.classed("destination-hidden", true)
 				.attr("hidden", true);
+		}
 	});
-
-	// ...and vice versa
-	destinationDropDown.on("change", () => {
-		originDropDown.select(".origin-hidden")
-				.classed("origin-hidden", false)
-				.attr("hidden", null);
-
-		originDropDown.select("#origin-" +  d3.event.target.value)
-				.classed("origin-hidden", true)
-				.attr("hidden", true);
-	});
-
-	update();
-});
+}
 
 /**
  * Runs on page load and after user presses submit button
