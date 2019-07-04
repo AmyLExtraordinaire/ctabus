@@ -235,6 +235,7 @@ div#tooltip:after {
 <div class="container">
 	<div class ="row justify-content-center">
 		<div>
+			<div class="widgets"><b>Route</b><br/> <select class="dropdown" id="route-select" onchange="updateRoute()"></select></div>
 			<div class="widgets"><b>Direction</b><br/> <select class="dropdown" id="direction-select"></select></div>
 			<div class="widgets"><b>Origin</b><br/> <select class="dropdown" id="origin-select"></select></div>
 			<div class="widgets"><b>Destination</b><br/> <select class="dropdown" id="destination-select"></select></div>
@@ -244,7 +245,7 @@ div#tooltip:after {
 				<div class="time"><b>Minute</b><br/> <select class="dropdown" id="minute-select"></select></div>
 			</div>
 			<div class="widgets" id="submit">
-				<input class="dropdown" name="updateButton" type=button value="Update" onclick="update()" />
+				<input class="dropdown" name="updateButton" type=button value="Update" onclick="updatePlots()" />
 			</div>
 		</div>
 

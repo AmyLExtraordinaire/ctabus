@@ -7,14 +7,18 @@ var margin = {top: 25, right: 25, bottom: 25, left: 25},
 var stopList;
 var waitCols = [];
 
-var defaultValues = {
-	direction: "Westbound",
-	origin: 10603,
-	destination: 14122, 
-	day: "All days",
-	hour: 17,
-	minute: 30
-};
+var defaultValues;
+
+var routeSelect = d3.select("#route-select");
+
+routeSelect.selectAll("option")
+		.data([55, 73])
+	.enter().append("option")
+		.attr("value", d => d)
+		.attr("id", d => "rt-" + d)
+		.text(d => "Route " + d);
+
+routeSelect.property("value", 55);
 
 var formatTimeAxis = d3.timeFormat("%-I%p");
 var formatTimeCaption = d3.timeFormat("%-I:%M%p");
@@ -118,72 +122,82 @@ waitPlot.append("g")
 		.attr("fill", "black")
 		.text("Wait Time (min)");
 
-// loads list of bus stops and populates dropdown menus
-d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stops) {
-	if (error) throw error;
+function updateRoute() {
+	var rt = document.getElementById("route-select").value;
 
-	stopList = stops;
+	// loads list of bus stops and populates dropdown menus
+	 d3.queue()
+      .defer(d3.json, "data/project_page/stop_lists/" + rt + "_stop_list.json")
+      .defer(d3.json, "data/project_page/defaults/" + rt + "_defaults.json")
+      .await(ready);
 
-	// creates each dropdown menu
-	d3.select("#direction-select")
-		.selectAll("option")
-			.data(Object.keys(stopList))
-		.enter().append("option")
-			.attr("value", d => d)
-			.text(d => d);
+	function ready(error, stops, defaults) {
+		if (error) throw error;
 
-	d3.select("#day-select")
-		.selectAll("option")
-			.data(["All days", "Weekdays", "Saturdays", "Sundays"])
-		.enter()
-			.append("option")
-			.attr("value", d => d)
-			.text(d => d);
+		stopList = stops;
+		defaultValues = defaults.plotjsdefs;
 
-	// data is list of integers 0 to 23 (i.e. 24 hours)
-	d3.select("#hour-select")
-		.selectAll("option")
-			.data(Array(24).fill().map((_, i) => i))
-		.enter().append("option")
-			.attr("value", d => d)
-			.text(d => d);
+		// creates each dropdown menu
+		d3.select("#direction-select")
+			.selectAll("option")
+				.data(Object.keys(stopList))
+			.enter().append("option")
+				.attr("value", d => d)
+				.text(d => d);
 
-	// data is list of integers 0 to 59 (i.e. 60 minutes)
-	d3.select("#minute-select")
-		.selectAll("option")
-			.data(Array(60).fill().map((_, i) => i))
-		.enter().append("option")
-			.attr("value", d => d)
-			.text(d => d);
+		d3.select("#day-select")
+			.selectAll("option")
+				.data(["All days", "Weekdays", "Saturdays", "Sundays"])
+			.enter()
+				.append("option")
+				.attr("value", d => d)
+				.text(d => d);
 
-	updateDropdownValues(stops, defaultValues.direction);
+		// data is list of integers 0 to 23 (i.e. 24 hours)
+		d3.select("#hour-select")
+			.selectAll("option")
+				.data(Array(24).fill().map((_, i) => i))
+			.enter().append("option")
+				.attr("value", d => d)
+				.text(d => d);
 
-	var directionDropDown = d3.select("#direction-select");
-	var originDropDown = d3.select("#origin-select");
-	var destinationDropDown = d3.select("#destination-select");
-	var hourSelect = d3.select("#hour-select");
-	var minuteSelect = d3.select("#minute-select");
+		// data is list of integers 0 to 59 (i.e. 60 minutes)
+		d3.select("#minute-select")
+			.selectAll("option")
+				.data(Array(60).fill().map((_, i) => i))
+			.enter().append("option")
+				.attr("value", d => d)
+				.text(d => d);
 
-	// assigns each dropdown menu a default value
-	directionDropDown.property("value", defaultValues.direction);
-	originDropDown.property("value", defaultValues.origin);
-	destinationDropDown.property("value", defaultValues.destination);
-	hourSelect.property("value", defaultValues.hour);
-	minuteSelect.property("value", defaultValues.minute);
+		updateDropdownValues(stops, defaultValues.direction);
 
-	// update origin and destination options on route direction change
-	directionDropDown.on("change", () => {
-		originDropDown.selectAll("option").remove();
-		destinationDropDown.selectAll("option").remove();
-		updateDropdownValues(stops, d3.event.target.value);
-	})
+		var directionDropDown = d3.select("#direction-select");
+		var originDropDown = d3.select("#origin-select");
+		var destinationDropDown = d3.select("#destination-select");
+		var hourSelect = d3.select("#hour-select");
+		var minuteSelect = d3.select("#minute-select");
 
-	update();
-});
+		// assigns each dropdown menu a default value
+		directionDropDown.property("value", defaultValues.direction);
+		originDropDown.property("value", defaultValues.origin);
+		destinationDropDown.property("value", defaultValues.destination);
+		hourSelect.property("value", defaultValues.hour);
+		minuteSelect.property("value", defaultValues.minute);
+
+		// update origin and destination options on route direction change
+		directionDropDown.on("change", () => {
+			updateDropdownValues(stops, d3.event.target.value);
+		})
+
+		updatePlots();
+	}
+}
 
 function updateDropdownValues(data, rtdir) {
 	var originDropDown = d3.select("#origin-select");
 	var destinationDropDown = d3.select("#destination-select");
+	originDropDown.selectAll("option").remove();
+	destinationDropDown.selectAll("option").remove();
 
 	// creates each dropdown menu
 	originDropDown
@@ -245,8 +259,9 @@ function updateDropdownValues(data, rtdir) {
  * Runs on page load and after user presses submit button
  * Loads trip and wait time data and renders corresponding plots
  */
-function update() {
+function updatePlots() {
 	// collects input from dropdown menus
+	var rt = document.getElementById("route-select").value;
 	var direction = d3.select("#direction-select").node().value;
 	var originSelect = d3.select("#origin-select").node();
 	var origin = originSelect.value;
@@ -289,7 +304,7 @@ function update() {
 	}
 	
 	// Load trip and wait time data
-	var dataPath = "data/project_page/travels_waits/55/55_" + direction.toLowerCase() + "_201905_" + origin + "_tw.csv";
+	var dataPath = "data/project_page/travels_waits/" + rt  + "/" + rt + "_" + direction.toLowerCase() + "_201905_" + origin + "_tw.csv";
 	d3.csv(dataPath, type, function(error, data) {
 		/**
 		 * FIXME: when data re-processed, rename columns "start" and "stop" to
@@ -429,3 +444,5 @@ function type(d, i) {
 
 	return d;
 }
+
+updateRoute();

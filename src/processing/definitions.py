@@ -7,6 +7,7 @@ CONFIG_PATH = os.path.join(ROOT_DIR, "keys.config")
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 RAW_DATA_DIR = os.path.join(DATA_DIR, "raw")
 PROCESSED_DATA_DIR = os.path.join(DATA_DIR, "processed")
+PROJECT_PAGE_DATA_DIR = os.path.join(DATA_DIR, "project_page")
 
 ## Raw data
 PATTERNS_DIR = os.path.join(RAW_DATA_DIR, "getpatterns")
