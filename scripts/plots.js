@@ -4,9 +4,13 @@ var margin = {top: 25, right: 25, bottom: 25, left: 25},
 		width = outerWidth - margin.left - margin.right,
 		height = outerHeight - margin.top - margin.bottom;
 
+var stopList;
+var waitCols = [];
+
 var defaultValues = {
-	origin: "MidwayOrange",
-	destination: "Ashland", 
+	direction: "Westbound",
+	origin: 10603,
+	destination: 14122, 
 	day: "All days",
 	hour: 17,
 	minute: 30
@@ -115,33 +119,46 @@ waitPlot.append("g")
 		.text("Wait Time (min)");
 
 // loads list of bus stops and populates dropdown menus
-d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stopList) {
+d3.json("data/project_page/stop_lists/55_stop_list2.json", function(error, stops) {
+//d3.json("data/project_page/geometry/55_5424.topojson", function(error, stopList) {
 	if (error) throw error;
 
 	/**
 	 * FIXME: when future bus routes are added, shouldn't populate stop list from
 	 * only stops in the negative (i.e. southbound or westbound) direction
 	 */
-	var stopNames = Object.keys(stopList['negative']);
+	
+	//var stopNames = Object.keys(stopList['negative']);
+	stopList = stops;
+	var stopNames = stops["Westbound"];
+	console.log(stopNames)
 
+	// creates each dropdown menu
+	d3.select("#direction-select")
+		.selectAll("option")
+			.data(Object.keys(stopList))
+		.enter().append("option")
+			.attr("value", d => d)
+			.text(d => d);
+	
 	// creates each dropdown menu
 	d3.select("#origin-select")
 		.selectAll("option")
 			.data(stopNames)
 		.enter().append("option")
-			.attr("value", (d, i) => d + "|" + i)
+			.attr("value", d => d.stpid)
 			.attr("class", "origin-stops")
-			.attr("id", d => "origin-" + d)
-			.text(d => d);
+			.attr("id", d => "origin-" + d.stpid)
+			.text(d => d.stpnm);
 
 	d3.select("#destination-select")
 		.selectAll("option")
 			.data(stopNames)
 		.enter().append("option")
-			.attr("value", (d, i) => d + "|" + i)
+			.attr("value", d => d.stpid)
 			.attr("class", "destination-stops")
-			.attr("id", d => "destination-" + d)
-			.text(d => d);
+			.attr("id", d => "destination-" + d.stpid)
+			.text(d => d.stpnm);
 
 	d3.select("#day-select")
 		.selectAll("option")
@@ -168,14 +185,16 @@ d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stopLi
 			.text(d => d);
 
 	
+	var directionDropDown = d3.select("#direction-select");
 	var originDropDown = d3.select("#origin-select");
 	var destinationDropDown = d3.select("#destination-select");
 	var hourSelect = d3.select("#hour-select");
 	var minuteSelect = d3.select("#minute-select");
 
 	// assigns each dropdown menu a default value
-	originDropDown.property("value", [defaultValues.origin, 17].join("|"));
-	destinationDropDown.property("value", [defaultValues.destination, 9].join("|"));
+	directionDropDown.property("value", defaultValues.direction);
+	originDropDown.property("value", defaultValues.origin);
+	destinationDropDown.property("value", defaultValues.destination);
 	hourSelect.property("value", defaultValues.hour);
 	minuteSelect.property("value", defaultValues.minute);
 
@@ -192,13 +211,34 @@ d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stopLi
 			.classed("destination-hidden", true)
 			.attr("hidden", true);
 
+	// update origin and destination options on route direction change
+	directionDropDown.on("change", () => {
+		originDropDown.selectAll("option").remove();
+		originDropDown.selectAll("option")
+			.data(stops[d3.event.target.value])
+		.enter().append("option")
+			.attr("value", d => d.stpid)
+			.attr("class", "origin-stops")
+			.attr("id", d => "origin-" + d.stpid)
+			.text(d => d.stpnm);
+
+		destinationDropDown.selectAll("option").remove();
+		destinationDropDown.selectAll("option")
+			.data(stops[d3.event.target.value])
+		.enter().append("option")
+			.attr("value", d => d.stpid)
+			.attr("class", "origin-stops")
+			.attr("id", d => "origin-" + d.stpid)
+			.text(d => d.stpnm);
+	})
+
 	// when origin selection changes, hides new selection from destination dropdown
 	originDropDown.on("change", () => {
 		destinationDropDown.select(".destination-hidden")
 				.classed("destination-hidden", false)
 				.attr("hidden", null);
 
-		destinationDropDown.select("#destination-" +  d3.event.target.value.split("|")[0])
+		destinationDropDown.select("#destination-" + d3.event.target.value)
 				.classed("destination-hidden", true)
 				.attr("hidden", true);
 	});
@@ -209,7 +249,7 @@ d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stopLi
 				.classed("origin-hidden", false)
 				.attr("hidden", null);
 
-		originDropDown.select("#origin-" +  d3.event.target.value.split("|")[0])
+		originDropDown.select("#origin-" +  d3.event.target.value)
 				.classed("origin-hidden", true)
 				.attr("hidden", true);
 	});
@@ -223,12 +263,16 @@ d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stopLi
  */
 function update() {
 	// collects input from dropdown menus
-	var origin = d3.select("#origin-select").node().value.split("|");
-	var destination = d3.select("#destination-select").node().value.split("|");
+	var direction = d3.select("#direction-select").node().value;
+	var originSelect = d3.select("#origin-select").node();
+	var origin = originSelect.value;
+	var originText = originSelect.options[originSelect.selectedIndex].text;
+	var destinationSelect = d3.select("#destination-select").node();
+	var destination = destinationSelect.value;
+	var destinationText = destinationSelect.options[destinationSelect.selectedIndex].text;
 	var day = d3.select("#day-select").node().value;
 	var hour = parseInt(d3.select("#hour-select").node().value);
 	var minute = parseInt(d3.select("#minute-select").node().value);
-	var direction = parseInt(origin[1]) < parseInt(destination[1]) ? "wb" : "eb"
 
 	// clears plots
 	d3.selectAll("circle.scatter").remove();
@@ -259,9 +303,9 @@ function update() {
 		startDay = 6;
 		endDay = 6;
 	}
-
+	
 	// Load trip and wait time data
-	var dataPath = "data/project_page/travels_waits/55/" + origin[0] + "_" + direction + ".csv";
+	var dataPath = "data/project_page/travels_waits/55/55_" + direction.toLowerCase() + "_201905_" + origin + "_tw.csv";
 	d3.csv(dataPath, type, function(error, data) {
 		/**
 		 * FIXME: when data re-processed, rename columns "start" and "stop" to
@@ -270,7 +314,7 @@ function update() {
 
 		// filters data based on dropdown selections
 		var filtered = data.filter((d) => (
-			(d.start == origin[0] && d.stop == destination[0]) &&
+			(d.origin == origin && d.destination == destination) &&
 			(startDay <= d.day_of_week && d.day_of_week <= endDay)
 		));
 		
@@ -278,11 +322,19 @@ function update() {
 		var binnedTrips = Array.apply(null, Array(24 * 4)).map(a => []);
 		var binnedWaits = Array.apply(null, Array(24 * 4)).map(a => []);
 
+		// choose correct wait times column to use
+		var stopArray = stopList[direction].map(x => x.stpid);
+		var destinationIndex = stopArray.indexOf(+destination);
+		var waitIndicies = waitCols.map(x => stopArray.indexOf(+x)).sort((a, b) => a - b);
+		waitIndicies = waitIndicies.filter(x => x >= destinationIndex);
+		var waitIndex = d3.min(waitIndicies);
+		var wait_time = stopArray[waitIndex];
+
 		// sorts data into appropriate bins so that statistics can be computed over each bin
 		filtered.forEach((a) => {
 			var i = Math.floor(a.decimal_time) * 4 + Math.floor(+a.decimal_time.split(".")[1] / 25);
 			binnedTrips[i].push(a.travel_time);
-			binnedWaits[i].push(a.wait_time);
+			binnedWaits[i].push(a[wait_time]);
 		});
 
 		/** 
@@ -302,17 +354,17 @@ function update() {
 		});
 
 		// updates title and caption
-		title.text(origin[0] + " -> " + destination[0] + " (" + day + ")");
+		title.text(originText + " -> " + destinationText + " (" + day + ")");
 
 		var timeIndex = (hour * 4) + Math.floor(minute / 15);
 		if (!waitMedian[timeIndex]) {
 			caption.text("At " + formatTimeCaption(parseTime(hour + " " + minute)) +
-				" there are no 55 Garfiled buses leaving from " + origin[0] +
-				" going to " + destination[0] + ".");
+				" there are no 55 Garfiled buses leaving from " + originText +
+				" going to " + destinationText + ".");
 		} else {
 			caption.text("At " + formatTimeCaption(parseTime(hour + " " + minute)) + 
 				" the 55 Garfield bus leaves approximately every " + waitMedian[timeIndex].y.toFixed(1) +
-				" minutes from " + origin[0] + " going to " + destination[0] + "." +
+				" minutes from " + originText + " going to " + destinationText + "." +
 				" The trip takes around " + travelMedian[timeIndex].y.toFixed(1) + " minutes.");
 		}
 
@@ -321,7 +373,7 @@ function update() {
 			[0, d3.quantile(filtered.map(a => a.travel_time).sort((a, b) => a - b), 0.9) * 1.5]
 		);
 		yWait.domain(
-			[0, d3.quantile(filtered.map(a => a.wait_time).sort((a, b) => a - b), 0.9) * 1.5]
+			[0, d3.quantile(filtered.map(a => a[wait_time]).sort((a, b) => a - b), 0.9) * 1.5]
 		);
 
 		// updates plot of travel times
@@ -356,7 +408,7 @@ function update() {
 			.enter().append("circle")
 				.attr("class", "scatter")
 				.attr("cx", d => x(+d.decimal_time))
-				.attr("cy", d => yWait(d.wait_time))
+				.attr("cy", d => yWait(d[wait_time]))
 				.attr("r", "0.5px");
 		
 		waitPlot.append("path")
@@ -377,11 +429,19 @@ function update() {
 	});
 }
 
-function type(d) {
+function type(d, i) {
+	if (!i) {
+		for (var w in d) {
+	    if (/^wait\|/.test(w)) {
+	      waitCols.push(+w.split("|")[1]);
+	    }
+	  }
+	}
+
 	d.day_of_week = +d.day_of_week;
 	d.decimal_time = (+d.decimal_time).toFixed(2);
 	d.travel_time = +d.travel_time;
-	d.wait_time = +d.wait_time;
+	waitCols.forEach(w => d[w] = +d["wait|"+w]);
 
 	return d;
 }
