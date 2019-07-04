@@ -119,7 +119,7 @@ waitPlot.append("g")
 		.text("Wait Time (min)");
 
 // loads list of bus stops and populates dropdown menus
-d3.json("data/project_page/stop_lists/55_stop_list2.json", function(error, stops) {
+d3.json("data/project_page/stop_lists/55_stop_list.json", function(error, stops) {
 //d3.json("data/project_page/geometry/55_5424.topojson", function(error, stopList) {
 	if (error) throw error;
 
