@@ -10,17 +10,10 @@
 
   var maxBunching;
 
-  // Unit projection
-  var smallProjection = d3.geoMercator()
-      .scale(1 / tau)
-      .translate([0, 0]);
-
-  var bigProjection = d3.geoMercator()
-      .scale(1 / tau)
-      .translate([0, 0]);
+  var smallProjection = d3.geoMercator(),
+      bigProjection = d3.geoMercator();
 
   var path = d3.geoPath();
-      //.projection();
 
   var fullViz = d3.select("#bunching-svg");
 
@@ -37,12 +30,33 @@
       .attr("id", "tooltip")
       .style("visibility", "hidden");
 
-  d3.queue()
-      .defer(d3.json, "data/project_page/geometry/55_5425.topojson")
-      .defer(d3.json, "data/project_page/bunching/55_Westbound_bunching.json")
-      .defer(d3.json, "data/project_page/geometry/55_5424.topojson")
-      .defer(d3.json, "data/project_page/bunching/55_Eastbound_bunching.json")
-      .await(ready);
+  function setUnitProjection(projection) {
+    projection
+      .scale(1 / tau)
+      .translate([0, 0]);
+  }
+
+  function updateRouteBunching() {
+    d3.selectAll("#bunching-svg div").remove();
+
+    setUnitProjection(smallProjection);
+    setUnitProjection(bigProjection);
+
+    var rt = document.getElementById("route-select").value,
+        neg = rtInfo[rt].neg,
+        pos = rtInfo[rt].pos,
+        pidNeg = rtInfo[rt].pidNeg;
+        pidPos = rtInfo[rt].pidPos,
+
+    d3.queue()
+        .defer(d3.json, "data/project_page/geometry/" + rt + "_" + pidNeg + ".topojson")
+        .defer(d3.json, "data/project_page/bunching/" + rt + "_" + neg + "_bunching.json")
+        .defer(d3.json, "data/project_page/geometry/" + rt + "_" + pidPos + ".topojson")
+        .defer(d3.json, "data/project_page/bunching/" + rt + "_" + pos + "_bunching.json")
+        .await(ready);
+  }
+
+  routeSelect.on("change.bunching", updateRouteBunching);
 
   function ready(error, rtWB, bunchingWB, rtEB, bunchingEB) {
     if (error) throw error;
@@ -53,16 +67,17 @@
     var deltaY = bbox[1][1] - bbox[0][1];
     var vertical = Math.abs(deltaX * 2) < deltaY;
 
-    console.log(vertical);
+    console.log(bbox);
 
     if (vertical) {
       width = 100;
       height = 200;
     }
-
+   
     // pre-filter data
-    bunchingWB = bunchingWB.filter(b => b.terminal == "wait|14122");
-    bunchingEB = bunchingEB.filter(b => b.terminal == "wait|10565");
+    var rt = document.getElementById("route-select").value
+    bunchingWB = bunchingWB.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalNeg);
+    bunchingEB = bunchingEB.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalPos);
 
     bunchingEB.forEach((data, i) => {
       var wrapper = fullViz
@@ -312,5 +327,7 @@
         });
     });
   }
+
+updateRouteBunching();
 
 })();

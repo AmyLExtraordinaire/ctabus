@@ -9,16 +9,7 @@ var waitCols = [];
 
 var defaultValues;
 
-var routeSelect = d3.select("#route-select");
-
-routeSelect.selectAll("option")
-		.data([55, 73])
-	.enter().append("option")
-		.attr("value", d => d)
-		.attr("id", d => "rt-" + d)
-		.text(d => "Route " + d);
-
-routeSelect.property("value", 55);
+routeSelect.on("change.plots", updateRoute);
 
 var formatTimeAxis = d3.timeFormat("%-I%p");
 var formatTimeCaption = d3.timeFormat("%-I:%M%p");
