@@ -297,10 +297,6 @@ function updatePlots() {
 	// Load trip and wait time data
 	var dataPath = "data/project_page/travels_waits/" + rt  + "/" + rt + "_" + direction.toLowerCase() + "_201905_" + origin + "_tw.csv";
 	d3.csv(dataPath, type, function(error, data) {
-		/**
-		 * FIXME: when data re-processed, rename columns "start" and "stop" to
-		 * "origin" and "destination" for consistency
-		 */
 
 		// filters data based on dropdown selections
 		var filtered = data.filter((d) => (
@@ -309,8 +305,9 @@ function updatePlots() {
 		));
 		
 		// initialize array of 15-minute bins (4 bins for each hour) for trip and wait times
-		var binnedTrips = Array.apply(null, Array(24 * 4)).map(a => []);
-		var binnedWaits = Array.apply(null, Array(24 * 4)).map(a => []);
+		const BINS_PER_HR = 2;
+		var binnedTrips = Array.apply(null, Array(24 * BINS_PER_HR)).map(a => []);
+		var binnedWaits = Array.apply(null, Array(24 * BINS_PER_HR)).map(a => []);
 
 		// choose correct wait times column to use
 		var stopArray = stopList[direction].map(x => x.stpid);
@@ -322,7 +319,7 @@ function updatePlots() {
 
 		// sorts data into appropriate bins so that statistics can be computed over each bin
 		filtered.forEach((a) => {
-			var i = Math.floor(a.decimal_time) * 4 + Math.floor(+a.decimal_time.split(".")[1] / 25);
+			var i = Math.floor(a.decimal_time) * BINS_PER_HR + Math.floor(+a.decimal_time.split(".")[1] / (100 / BINS_PER_HR));
 			binnedTrips[i].push(a.travel_time);
 			binnedWaits[i].push(a[wait_time]);
 		});
@@ -336,17 +333,17 @@ function updatePlots() {
 		 */
 		var travelMedian = binnedTrips.map((a, i) => {
 			var median = d3.median(a);
-			return median ? {x: i / 4, y: median} : null;
+			return median ? {x: i / BINS_PER_HR, y: median} : null;
 		});
 		var waitMedian = binnedWaits.map((a, i) => {
 			var median = d3.median(a);
-			return median ? {x: i / 4, y: median} : null;
+			return median ? {x: i / BINS_PER_HR, y: median} : null;
 		});
 
 		// updates title and caption
 		title.text(originText + " -> " + destinationText + " (" + day + ")");
 
-		var timeIndex = (hour * 4) + Math.floor(minute / 15);
+		var timeIndex = (hour * BINS_PER_HR) + Math.floor(minute / (60 / BINS_PER_HR));
 		if (!waitMedian[timeIndex]) {
 			caption.text("At " + formatTimeCaption(parseTime(hour + " " + minute)) +
 				" there are no 55 Garfiled buses leaving from " + originText +
@@ -384,9 +381,9 @@ function updatePlots() {
 
 		travelPlot.append("rect")
 				.attr("class", "timeband")
-				.attr("x", x(hour + (Math.floor(minute / 15) / 4)))
+				.attr("x", x(hour + (Math.floor(minute / (60 / BINS_PER_HR)) / BINS_PER_HR)))
 				.attr("y", 0)
-				.attr("width", x(0.25))
+				.attr("width", x(1 / BINS_PER_HR))
 				.attr("height", height);
 
 		// updates plot of wait times
@@ -407,9 +404,9 @@ function updatePlots() {
 
 		waitPlot.append("rect")
 				.attr("class", "timeband")
-				.attr("x", x(hour + (Math.floor(minute / 15) / 4)))
+				.attr("x", x(hour + (Math.floor(minute / (60 / BINS_PER_HR)) / BINS_PER_HR)))
 				.attr("y", 0)
-				.attr("width", x(0.25))
+				.attr("width", x(1 / BINS_PER_HR))
 				.attr("height", height);
 
 		title.classed("loading", false);
