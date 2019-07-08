@@ -73,3 +73,9 @@ def load_travels_waits(rt, rtdir, tag):
   travels_waits = pd.read_csv(tw_path)
   travels_waits.start_date = pd.to_datetime(travels_waits.start_date)
   return travels_waits
+
+def load_all_dfs(path):
+  data_files = glob.glob(tw_path)
+  dfs = (pd.read_csv(f) for f in data_files)
+  df  = pd.concat(dfs, ignore_index=True)
+  return df

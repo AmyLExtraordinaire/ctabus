@@ -5,9 +5,9 @@ CONFIG_PATH = os.path.join(ROOT_DIR, "keys.config")
 
 # Data directory paths
 DATA_DIR = os.path.join(ROOT_DIR, "data")
-RAW_DATA_DIR = os.path.join(DATA_DIR, "raw")
 PROCESSED_DATA_DIR = os.path.join(DATA_DIR, "processed")
 PROJECT_PAGE_DATA_DIR = os.path.join(DATA_DIR, "project_page")
+RAW_DATA_DIR = os.path.join(DATA_DIR, "raw")
 
 ## Raw data
 PATTERNS_DIR = os.path.join(RAW_DATA_DIR, "getpatterns")
@@ -15,10 +15,11 @@ ROUTES_DIR = os.path.join(RAW_DATA_DIR, "getroutes")
 VEHICLES_DIR = os.path.join(RAW_DATA_DIR, "getvehicles")
 
 ## Processed data
+BUNCHING_DIR = os.path.join(PROCESSED_DATA_DIR, "bunching")
+DEPARTURES_DIR = os.path.join(PROCESSED_DATA_DIR, "geometry")
+GEOMETRY_DIR = os.path.join(PROCESSED_DATA_DIR, "geometry")
 TIMETABLES_DIR = os.path.join(PROCESSED_DATA_DIR, "timetables")
 TRAVELS_WAITS_DIR = os.path.join(PROCESSED_DATA_DIR, "travels_waits")
-BUNCHING_DIR = os.path.join(PROCESSED_DATA_DIR, "bunching")
-GEOMETRY_DIR = os.path.join(PROCESSED_DATA_DIR, "geometry")
 
 ## Date/Time Definitions 
 CTA_TIME_PERIODS = [6, 9, 15, 19, 22]
