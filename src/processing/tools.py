@@ -75,7 +75,7 @@ def load_travels_waits(rt, rtdir, tag):
   return travels_waits
 
 def load_all_dfs(path):
-  data_files = glob.glob(tw_path)
+  data_files = glob.glob(path)
   dfs = (pd.read_csv(f) for f in data_files)
   df  = pd.concat(dfs, ignore_index=True)
   return df

@@ -16,7 +16,7 @@ VEHICLES_DIR = os.path.join(RAW_DATA_DIR, "getvehicles")
 
 ## Processed data
 BUNCHING_DIR = os.path.join(PROCESSED_DATA_DIR, "bunching")
-DEPARTURES_DIR = os.path.join(PROCESSED_DATA_DIR, "geometry")
+DEPARTURES_DIR = os.path.join(PROCESSED_DATA_DIR, "departures")
 GEOMETRY_DIR = os.path.join(PROCESSED_DATA_DIR, "geometry")
 TIMETABLES_DIR = os.path.join(PROCESSED_DATA_DIR, "timetables")
 TRAVELS_WAITS_DIR = os.path.join(PROCESSED_DATA_DIR, "travels_waits")
