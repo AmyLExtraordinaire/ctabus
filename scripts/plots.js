@@ -21,7 +21,7 @@ var x = d3.scaleLinear()
 
 var xTime = d3.scaleTime()
 		.range([0, width])
-		.domain([new Date("2017-01-01 00:00:00"), new Date("2017-01-02 00:00:00")]);
+		.domain([new Date("2017-01-01 03:00:00"), new Date("2017-01-02 03:00:00")]);
 
 var yTravel = d3.scaleLinear()
 		.range([height, 0]);
@@ -42,13 +42,13 @@ var yAxisWait = d3.axisLeft()
 var lineTravel = d3.line()
 		.curve(d3.curveBasis)
 		.defined(d => d)
-		.x(d => x(d.x))
+		.x(d => x(mod(d.x - 3, 24)))
 		.y(d => yTravel(d.y));
 
 var lineWait = d3.line()
 		.curve(d3.curveBasis)
 		.defined(d => d)
-		.x(d => x(d.x))
+		.x(d => x(mod(d.x - 3, 24)))
 		.y(d => yWait(d.y));
 
 // creates title and caption
@@ -333,12 +333,15 @@ function updatePlots() {
 		 */
 		var travelMedian = binnedTrips.map((a, i) => {
 			var median = d3.median(a);
-			return median ? {x: i / BINS_PER_HR, y: median} : null;
+			return {x: i / BINS_PER_HR, y: median ? median : null};
 		});
 		var waitMedian = binnedWaits.map((a, i) => {
 			var median = d3.median(a);
-			return median ? {x: i / BINS_PER_HR, y: median} : null;
+			return {x: i / BINS_PER_HR, y: median ? median : null};
 		});
+
+		travelMedian = travelMedian.sort((a, b) => mod(a.x - 3, 24) - mod(b.x - 3, 24)).map(a => a.y ? a : null)
+		waitMedian = waitMedian.sort((a, b) => mod(a.x - 3, 24) - mod(b.x - 3, 24)).map(a => a.y ? a : null)
 
 		// updates title and caption
 		title.text(originText + " -> " + destinationText + " (" + day + ")");
@@ -371,7 +374,7 @@ function updatePlots() {
 				.data(filtered)
 			.enter().append("circle")
 				.attr("class", "scatter")
-				.attr("cx", d => x(+d.decimal_time))
+				.attr("cx", d => x(mod(+d.decimal_time - 3 , 24)))
 				.attr("cy", d => yTravel(d.travel_time))
 				.attr("r", "0.5px");
 
@@ -381,7 +384,7 @@ function updatePlots() {
 
 		travelPlot.append("rect")
 				.attr("class", "timeband")
-				.attr("x", x(hour + (Math.floor(minute / (60 / BINS_PER_HR)) / BINS_PER_HR)))
+				.attr("x", x(mod(hour + (Math.floor(minute / (60 / BINS_PER_HR)) / BINS_PER_HR) - 3 , 24)))
 				.attr("y", 0)
 				.attr("width", x(1 / BINS_PER_HR))
 				.attr("height", height);
@@ -394,7 +397,7 @@ function updatePlots() {
 				.data(filtered)
 			.enter().append("circle")
 				.attr("class", "scatter")
-				.attr("cx", d => x(+d.decimal_time))
+				.attr("cx", d => x(mod(+d.decimal_time - 3 , 24)))
 				.attr("cy", d => yWait(d[wait_time]))
 				.attr("r", "0.5px");
 		
@@ -404,7 +407,7 @@ function updatePlots() {
 
 		waitPlot.append("rect")
 				.attr("class", "timeband")
-				.attr("x", x(hour + (Math.floor(minute / (60 / BINS_PER_HR)) / BINS_PER_HR)))
+				.attr("x", x(mod(hour + (Math.floor(minute / (60 / BINS_PER_HR)) / BINS_PER_HR) - 3 , 24)))
 				.attr("y", 0)
 				.attr("width", x(1 / BINS_PER_HR))
 				.attr("height", height);
@@ -415,6 +418,10 @@ function updatePlots() {
 		waitPlot.classed("loading", false);
 	});
 }
+
+	function mod(n, m) {
+    return ((n % m) + m) % m;
+  }
 
 function type(d, i) {
 	if (!i) {
