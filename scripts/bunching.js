@@ -3,8 +3,7 @@
   var pi = Math.PI,
       tau = 2 * pi;
 
-  var width = 200,
-      height = 100;
+  var width, height, translateX, translateY;
 
   var color = d3.scaleSequential(d3.interpolateMagma);
 
@@ -15,7 +14,7 @@
 
   var path = d3.geoPath();
 
-  var fullViz = d3.select("#bunching-svg");
+  var fullViz = d3.select("#bunching");
 
   var legendWidth = 100;
 
@@ -68,51 +67,56 @@
     var vertical = Math.abs(deltaX * 2) < deltaY;
 
     console.log(bbox);
+    console.log(vertical)
 
     if (vertical) {
       width = 100;
       height = 200;
+      var fullWidth = 4 * width,
+          fullHeight = 4 * (height + 20);
+      var smallMultiples = fullViz.append("svg")
+          .attr("class", "small-multiples")
+          .attr("width", width)
+          .attr("height", fullHeight);
+    } else {
+      width = 200;
+      height = 100;
+      var fullWidth = 4 * width,
+          fullHeight = 4 * height;
+      var smallMultiples = fullViz.append("svg")
+          .attr("class", "small-multiples")
+          .attr("width", fullWidth)
+          .attr("height", height + 20);
     }
-   
+
     // pre-filter data
     var rt = document.getElementById("route-select").value
     bunchingWB = bunchingWB.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalNeg);
     bunchingEB = bunchingEB.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalPos);
 
-    bunchingEB.forEach((data, i) => {
-      var wrapper = fullViz
-          .append("div")
-          .attr("width", width)
-          .attr("height", height + 20);
+    smallMultiples.selectAll(".thing")
+        .data(bunchingEB)
+      .enter().append("g")
+        .attr("class", (_, i) => "small-map-group" + (i ? " inactive" : " active"))
+        .attr("width", width)
+        .attr("height", height + 20)
+        .attr("transform", (_, i) => "translate(" + (vertical ? 0 : i * width) + "," + (vertical ? i * (height + 20) : 0) + ")")
+      .append("svg")
+        .attr("class", "small-map")
+        .attr("width", width)
+        .attr("height", height)
+        .each(function (d) {
+          drawMap(bbox, width, height, smallProjection, d3.select(this));
+        })
 
-      var figure = wrapper.append("svg")
-          .attr("class", i ? " inactive" : " active")
-          .attr("id", "small-map-wrapper" + i)
-          .attr("width", width)
-          .attr("height", height + 20);
-
-      var map = figure.append("svg")
-          .attr("class", "small-map")
-          .attr("width", width)
-          .attr("height", height);
-
-      drawMap(bbox, width, height, smallProjection, map);
-    });
-
-    var fullWidth = width * bunchingEB.length
-    var fullHeight = height * 4
-    var bigWrapper = fullViz
-        .append("div")
-        .attr("width", fullWidth)
-        .attr("height", fullHeight);
-
-    var bigMap = bigWrapper.append("svg")
+    var bigMap = fullViz.append("svg")
           .attr("id", "fullmap")
           .attr("width", fullWidth)
-          .attr("height", fullHeight);
+          .attr("height", fullHeight)
+          .attr("transform", "translate(" + (vertical ? width : 0) + ",0)");
 
     drawMap(bbox, fullWidth, fullHeight, bigProjection, bigMap);
-
+    
     var buttonWB = drawTextButton(bigMap, 30, fullHeight - 10, "&#8592 WB", "bold 16px sans-serif");
 
     buttonWB
@@ -163,43 +167,15 @@
     return map;
   }
 
-  function drawRoute(svg, data, geometry, projection) {
-    var route = svg.selectAll(".stops")
-        .data(topojson.feature(geometry, geometry.objects.stops).features)
-      .enter().append("path")
-        .attr("d", path.projection(projection))
-        .attr("fill", "none")
-        .attr("stroke", d => color(data.values[d.properties.stpid].proportion))
-        .attr("pointer-events", "visibleStroke");
-
-    return route;
-  }
-
-  function updateColorScale(data) {
-    maxBunching = d3.max(data, b => d3.max(Object.values(b.values).map(v => v.proportion)));
-    color.domain([0, maxBunching]);
-  }
-
-  function updateColor(data) {
-    d3.selectAll(".big-map-path")
-        .attr("stroke", d => color(data.values[d.properties.stpid].proportion));
-  }
-
-  function drawSmallMultiples(data, geometry, projection) {
-    data.forEach((d, i) => {
-      var smallMap = d3.select("#small-map-wrapper" + i);
-      drawSmallFigure(smallMap, d, geometry, projection);
-    });
-  }
-
-  function drawSmallFigure(svg, data, geometry, projection) {
-    svg = svg.append("g").attr("class", "small-figure-info");
-
-    var route = drawRoute(svg, data, geometry, projection);
-
-    route.attr("stroke-width", 2)
-
-    var button = drawTextButton(svg, width / 2, height + 15, data.time_of_day, "bold 12px sans-serif");
+  function drawSmallMultiples(geometry, projection) {
+    d3.selectAll(".small-map-group")
+        .append("g")
+        .attr("class", "small-multiple-info")
+        .each(function(d) {
+          var route = drawRoute(d3.select(this), d, geometry, projection);
+          route.attr("stroke-width", 2)
+          var button = drawTextButton(d3.select(this), width / 2, height + 15, d.time_of_day, "bold 12px sans-serif");
+        })
   }
 
   function drawTextButton(svg, x, y, text, font) {
@@ -275,6 +251,18 @@
         .attr("fill", d => color(legendY(d)));
   }
 
+  function drawRoute(svg, data, geometry, projection) {
+    var route = svg.selectAll(".stops")
+        .data(topojson.feature(geometry, geometry.objects.stops).features)
+      .enter().append("path")
+        .attr("d", path.projection(projection))
+        .attr("fill", "none")
+        .attr("stroke", d => color(data.values[d.properties.stpid].proportion))
+        .attr("pointer-events", "visibleStroke");
+
+    return route;
+  }
+
   function toggleClasses(a, b, e) {
     d3.selectAll("." + a).classed(a, false).classed(b, true);
     e.classed(a, true).classed(b, false);
@@ -302,30 +290,37 @@
         .style("top", (trans.y - 10) +  "px");
   }
 
+  function updateColorScale(data) {
+    maxBunching = d3.max(data, b => d3.max(Object.values(b.values).map(v => v.proportion)));
+    color.domain([0, maxBunching]);
+  }
+
+  function updateColor(data) {
+    d3.selectAll(".big-map-path")
+        .attr("stroke", d => color(data.values[d.properties.stpid].proportion));
+  }
+
   function update(data, geometry) {
     d3.selectAll(".big-figure").remove();
-    d3.selectAll(".small-figure-info").remove();
+    d3.selectAll(".small-multiple-info").remove();
     updateColorScale(data);
-    drawSmallMultiples(data, geometry, smallProjection);
+
+    var smallMultiples = d3.selectAll(".small-map-group");
+    smallMultiples.data(data).exit();
+    drawSmallMultiples(geometry, smallProjection);
     drawFigure(data[0], geometry, bigProjection);
 
-    toggleClasses("active", "inactive", d3.select("#small-map-wrapper0"));
-    //d3.select("#small-map-wrapper0").classed("active", true)
-
-    data.forEach((row, i) => {
-      d3.select("#small-map-wrapper" + i)
-        .on("click", function(d) {
-          if(!d3.select(this).classed("active")) {
-            toggleClasses("active", "inactive", d3.select(this));
-            var newData = data.filter(b => b.time_of_day == row.time_of_day)[0];
-            updateColor(newData);
-            d3.selectAll(".big-map-path")
-              .on("mouseover", function(e) {
-                showToolTip(this, e, newData);
-              })
-          }
-        });
-    });
+    d3.selectAll(".small-map-group")
+      .on("click", function(d) {
+        if(!d3.select(this).classed("active")) {
+          toggleClasses("active", "inactive", d3.select(this));
+          updateColor(d);
+          d3.selectAll(".big-map-path")
+            .on("mouseover", function(e) {
+              showToolTip(this, e, d);
+            })
+        }
+      });
   }
 
 updateRouteBunching();
