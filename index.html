@@ -40,6 +40,7 @@ select {
 	padding: 5px 35px 5px 5px;
 }
 
+
 .widgets {
 	font-size: 12px;
 	padding-top: 10px;
@@ -55,41 +56,32 @@ select {
 	display: inline-block;
 }
 
-#svg {
-	max-width: 900px;
+
+/* Departures plots */
+
+#svg-departures-caption {
+	font-size: 16px;
+	font-weight: bold;
 }
 
-#eb-departure:hover, #wb-departure:hover {
-	fill: red;
-	opacity: 1;
+table {
+	font: 10px sans-serif;
 }
 
-#travelPlot {
-	max-width: 800px;
+tr:nth-child(even) { 
+	background-color: #eee;
 }
 
-#waitPlot {
-	max-width: 800px;
+tr.active {
+	background-color: #ffd;
 }
 
-.axis--x path, .axis--y path, .major path, .major text {
-	display: none;
+td.c, th.c {
+	text-align: center;
 }
 
-circle.scatter {
-	fill: black;
-}
 
-path.median {
-	fill: none;
-	stroke: crimson;
-	stroke-width: 1px;
-}
-
-rect.timeband {
-	fill: deepskyblue;
-	opacity: 0.2;
-}
+/* Bunching Plots */
 
 #bunching-svg {
   max-width: 900px;
@@ -162,6 +154,36 @@ div#tooltip:after {
 .axis path{
   stroke: none;
 }
+
+
+/* Travels/Waits Plots */
+
+#travelPlot {
+	max-width: 800px;
+}
+
+#waitPlot {
+	max-width: 800px;
+}
+
+.axis--x path, .axis--y path, .major path, .major text {
+	display: none;
+}
+
+circle.scatter {
+	fill: black;
+}
+
+path.median {
+	fill: none;
+	stroke: crimson;
+	stroke-width: 1px;
+}
+
+rect.timeband {
+	fill: deepskyblue;
+	opacity: 0.2;
+}
 </style>
 <div class="container">
 	<div class="row">
@@ -180,18 +202,28 @@ div#tooltip:after {
 <div class="container">
 	<div class="row">
 		<div class="col-sm-12 col-lg-10 offset-lg-1">
-			<h2>About Route <span class="text-rtno"></span> <span class="text-rtnm"></span></h2>
+			<h2>Route <span class="text-rtno"></span> <span class="text-rtnm"></span></h2>
 			<p id="text-rtinfo"></p>
 
-			<p>The heat map below gives an overview of the volume of service on Route <span class="text-rtno"></span> over the course of each day in a typical week. The color of each square represents the number of buses dispatched across the route from the selected direction of travel during the corresponding hour of the day and day of the week. Darker squares indicate times when a higher volume of buses begin their trips. Clicking "Westbound" and "Eastbound" changes the direction of travel that the data in heat map summarizes.</p>
+			<p>The joy-plot style histograms show when buses depart from an origin terminal heading toward a destination terminal. Clusters with sharp peaks indicate the buses leave at similar times each day, whereas more spread out clusters indicate variablity in the departure time.</p>
 		</div>
 	</div>
 </div>
 
 <div class="container">
-	<div class="row">
-		<div class="col-sm-12 col-lg-10 offset-lg-1" style="min-width: 576px">
+	<div class="row offset-lg-1 justify-content-center">
+		<div class="col-lg-5" style="min-width: 576px">
+			<div id="svg-departures-caption"></div>
 			<div id="svg-departures"></div>
+		</div>
+		<div class="col-lg-5" id="test">
+			<table id="departures-table">
+				<thead>Avg daily trip totals</thead>
+        <tbody id="departures-tbody">
+        </tbody>
+        <tfoot id="departures-tfoot">
+        </tfoot>
+			</table>
 		</div>
 	</div>
 </div>
@@ -225,7 +257,7 @@ div#tooltip:after {
 <div class="container">
 	<div class="row">
 		<div class="col-sm-12 col-lg-10 offset-lg-1">
-			<h2>Planning Your Commute</h2>
+			<h2>Travel and Wait Times</h2>
 			<p>Using the dropdown boxes on the left, select an origin bus stop, a destination bus stop, and a day of the week to generate scatter plots detailing trip and wait times for the Garfield bus throughout the day. The top plot shows the travel times for buses going between the origin and desination stops. The bottom plot shows the longest possible wait times between buses leaving the origin stop heading toward the desintation stop. It is necessary to provide a destination stop when computing wait times, since not all scheduled bus trips from the same route travel visit the same sequence of stops. The red curves indicate the median travel and wait times calculated over 15-minute intervals. Read a written summary of the travel and wait times at a particular time of day by selecting values from the hour and minute dropdown menus. The pale blue boxes highlight a 30-minute interval around the time being considered.</p>
 		</div>
 	</div>
@@ -242,8 +274,8 @@ div#tooltip:after {
 				<div class="time"><b>Hour</b><br/> <select class="dropdown" id="hour-select"></select></div>
 				<div class="time"><b>Minute</b><br/> <select class="dropdown" id="minute-select"></select></div>
 			</div>
-			<div class="widgets" id="submit">
-				<input class="dropdown" name="updateButton" type=button value="Update" onclick="updatePlots()" />
+			<div class="widgets">
+				<input class="dropdown" id="submit" name="updateButton" type=button value="Update"/>
 			</div>
 		</div>
 
