@@ -3,6 +3,7 @@ import definitions
 import pandas as pd
 import os.path
 import argparse
+import json
 
 def main(rt, rtdir, tag):
   df = tools.load_travels_waits(rt, rtdir, tag)
@@ -10,10 +11,9 @@ def main(rt, rtdir, tag):
   wait_cols = df.columns[df.columns.str.contains("wait\|")]
   df["day_of_week"] = df.start_date.dt.dayofweek
 
-  stpid_path = os.path.join(os.path.join(definitions.PROJECT_PAGE_DATA_DIR, "stpids"), "{}_stpids.txt".format(rt))
+  stpid_path = os.path.join(os.path.join(definitions.PROJECT_PAGE_DATA_DIR, "defaults"), "{}_defaults.json".format(rt))
   with open(stpid_path) as f:
-    use_stpids = [int(line.rstrip('\n')) for line in f]
-    
+    use_stpids = json.load(f)["stpids"] 
 
   melted = pd.melt(df, id_vars=["origin", "day_of_week", "decimal_time"] + list(wait_cols), value_vars=travel_cols, var_name="destination", value_name="travel_time")
   melted.dropna(subset=["travel_time"], inplace=True)

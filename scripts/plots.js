@@ -131,10 +131,14 @@
 			defaultValues = defaults.plotjsdefs;
 
 			// creates each dropdown menu
-			d3.select("#direction-select")
-				.selectAll("option")
-					.data(Object.keys(stopList))
-				.enter().append("option")
+			var select = d3.select("#direction-select")
+				.selectAll(".rtdir-option")
+					.data(Object.keys(stopList), d => d)
+
+			select.exit().remove()
+
+			select.enter().append("option")
+					.attr("class", "rtdir-option")
 					.attr("value", d => d)
 					.text(d => d);
 
@@ -341,6 +345,8 @@
 				var median = d3.median(a);
 				return {x: i / BINS_PER_HR, y: median ? median : null};
 			});
+			console.log(travelMedian)
+			console.log(waitMedian)
 
 			travelMedian = travelMedian.sort((a, b) => mod(a.x - 3, 24) - mod(b.x - 3, 24)).map(a => a.y ? a : null)
 			waitMedian = waitMedian.sort((a, b) => mod(a.x - 3, 24) - mod(b.x - 3, 24)).map(a => a.y ? a : null)
@@ -348,14 +354,14 @@
 			// updates title and caption
 			title.text(originText + " -> " + destinationText + " (" + day + ")");
 
-			var timeIndex = (hour * BINS_PER_HR) + Math.floor(minute / (60 / BINS_PER_HR));
+			var timeIndex = (mod(hour - 3, 24) * BINS_PER_HR) + Math.floor(minute / (60 / BINS_PER_HR));
 			if (!waitMedian[timeIndex]) {
 				caption.text("At " + formatTimeCaption(parseTime(hour + " " + minute)) +
-					" there are no 55 Garfiled buses leaving from " + originText +
+					" there are no " + rtInfo[rt].rtno + " " + rtInfo[rt].rtnm + " buses leaving from " + originText +
 					" going to " + destinationText + ".");
 			} else {
 				caption.text("At " + formatTimeCaption(parseTime(hour + " " + minute)) + 
-					" the 55 Garfield bus leaves approximately every " + waitMedian[timeIndex].y.toFixed(1) +
+					" the " + rtInfo[rt].rtno + " " + rtInfo[rt].rtnm + " bus leaves approximately every " + waitMedian[timeIndex].y.toFixed(1) +
 					" minutes from " + originText + " going to " + destinationText + "." +
 					" The trip takes around " + travelMedian[timeIndex].y.toFixed(1) + " minutes.");
 			}

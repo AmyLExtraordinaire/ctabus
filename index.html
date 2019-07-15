@@ -83,13 +83,13 @@ td.c, th.c {
 
 /* Bunching Plots */
 
-#bunching-svg {
-  max-width: 900px;
-  margin: 0px 50px;
+#bunching {
+	text-align: center;
 }
 
-#bunching-svg div {
-  float: left;
+#bunching svg{
+  margin: auto;
+  display: inline-block;
 }
 
 .small-map {
@@ -100,24 +100,24 @@ rect.textbox {
   opacity: 0;
 }
 
-.inactive:hover .small-map {
+.sm-inactive:hover .small-map {
   opacity: 0.8;
 }
 
-.inactive:hover rect, .update-inactive:hover rect {
+.sm-inactive:hover rect, .update-inactive:hover rect {
   opacity: 0.3; 
 }
 
-.active svg {
+.sm-active svg {
   opacity: 1;
 }
 
-.active rect, .update-active rect {
+.sm-active rect, .update-active rect {
   opacity: 1;
   fill: #333;
 }
 
-.active text, .update-active text {
+.sm-active text, .update-active text {
   fill: white;
 }
 

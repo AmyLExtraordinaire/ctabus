@@ -12,14 +12,6 @@
       .attr("preserveAspectRatio", "xMidYMid meet")
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");*/
-
-  var directionAbbrv = {
-    "Northbound": "NB",
-    "Eastbound": "EB",
-    "Southbound": "SB",
-    "Westbound": "WB"
-  }
-
 /*
   var svg = d3.select("#svg-departures").append("svg")
       .attr("width", outerWidth)

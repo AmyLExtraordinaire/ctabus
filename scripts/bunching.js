@@ -3,7 +3,7 @@
   var pi = Math.PI,
       tau = 2 * pi;
 
-  var width, height, translateX, translateY;
+  var width, height, fullWidth, fullHeight;
 
   var color = d3.scaleSequential(d3.interpolateMagma);
 
@@ -36,7 +36,7 @@
   }
 
   function updateRouteBunching() {
-    d3.selectAll("#bunching-svg div").remove();
+    d3.selectAll("#bunching svg").remove();
 
     setUnitProjection(smallProjection);
     setUnitProjection(bigProjection);
@@ -57,32 +57,31 @@
 
   routeSelect.on("change.bunching", updateRouteBunching);
 
-  function ready(error, rtWB, bunchingWB, rtEB, bunchingEB) {
+  function ready(error, rtNeg, bunchingNeg, rtPos, bunchingPos) {
     if (error) throw error;
 
-    var bbox = path.projection(smallProjection).bounds(topojson.feature(rtEB, rtEB.objects.stops));
+    var bbox = path.projection(smallProjection).bounds(topojson.feature(rtPos, rtPos.objects.stops));
 
     var deltaX = bbox[1][0] - bbox[0][0];
     var deltaY = bbox[1][1] - bbox[0][1];
     var vertical = Math.abs(deltaX * 2) < deltaY;
 
-    console.log(bbox);
-    console.log(vertical)
-
     if (vertical) {
-      width = 100;
-      height = 200;
-      var fullWidth = 4 * width,
-          fullHeight = 4 * (height + 20);
+      width = 75;
+      height = 150;
+      fullWidth = 4 * width,
+      fullHeight = 4 * (height + 20);
+
       var smallMultiples = fullViz.append("svg")
           .attr("class", "small-multiples")
           .attr("width", width)
           .attr("height", fullHeight);
     } else {
-      width = 200;
-      height = 100;
-      var fullWidth = 4 * width,
-          fullHeight = 4 * height;
+      width = 150;
+      height = 75;
+      fullWidth = 4 * width,
+      fullHeight = 4 * height;
+
       var smallMultiples = fullViz.append("svg")
           .attr("class", "small-multiples")
           .attr("width", fullWidth)
@@ -91,13 +90,13 @@
 
     // pre-filter data
     var rt = document.getElementById("route-select").value
-    bunchingWB = bunchingWB.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalNeg);
-    bunchingEB = bunchingEB.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalPos);
+    bunchingNeg = bunchingNeg.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalNeg);
+    bunchingPos = bunchingPos.filter(b => b.terminal == "wait|" + rtInfo[rt].stpidTerminalPos);
 
-    smallMultiples.selectAll(".thing")
-        .data(bunchingEB)
+    smallMultiples.selectAll(".small-map-group")
+        .data(bunchingPos)
       .enter().append("g")
-        .attr("class", (_, i) => "small-map-group" + (i ? " inactive" : " active"))
+        .attr("class", (_, i) => "small-map-group" + (i ? " sm-inactive" : " sm-active"))
         .attr("width", width)
         .attr("height", height + 20)
         .attr("transform", (_, i) => "translate(" + (vertical ? 0 : i * width) + "," + (vertical ? i * (height + 20) : 0) + ")")
@@ -116,30 +115,34 @@
           .attr("transform", "translate(" + (vertical ? width : 0) + ",0)");
 
     drawMap(bbox, fullWidth, fullHeight, bigProjection, bigMap);
-    
-    var buttonWB = drawTextButton(bigMap, 30, fullHeight - 10, "&#8592 WB", "bold 16px sans-serif");
 
-    buttonWB
+    if (vertical) {
+      var buttonPos = drawTextButton(bigMap, 30, 30, "<tspan>&#8593</tspan><tspan dx='-1em' dy='1.2em'>NB</tspan>", "bold 16px sans-serif");
+      var buttonNeg = drawTextButton(bigMap, 30, fullHeight - 30, "<tspan dx='-0.5em'>SB</tspan><tspan dx='-1em' dy='0.9em'>&#8595</tspan>", "bold 16px sans-serif");
+    } else {
+      var buttonPos = drawTextButton(bigMap, fullWidth - 30, fullHeight - 10, "EB &#8594", "bold 16px sans-serif");
+      var buttonNeg = drawTextButton(bigMap, 30, fullHeight - 10, "&#8592 WB", "bold 16px sans-serif");
+    }   
+    
+    buttonNeg
         .attr("class", "update-inactive")
         .on("click", function (d) {
-          update(bunchingWB, rtWB);
           if(!d3.select(this).classed("update-active")) {
+            update(bunchingNeg, rtNeg);
             toggleClasses("update-active", "update-inactive", d3.select(this));
           }
         });
 
-    var buttonEB = drawTextButton(bigMap, fullWidth - 30, fullHeight - 10, "EB &#8594", "bold 16px sans-serif");
-
-    buttonEB
+    buttonPos
         .attr("class", "update-active")
         .on("click", function (d) {
-          update(bunchingEB, rtEB);
           if(!d3.select(this).classed("update-active")) {
+            update(bunchingPos, rtPos);
             toggleClasses("update-active", "update-inactive", d3.select(this));
           }
         });
 
-    update(bunchingEB, rtEB)
+    update(bunchingPos, rtPos)
   }
 
   function drawMap(b, width, height, projection, svg) {
@@ -310,10 +313,12 @@
     drawSmallMultiples(geometry, smallProjection);
     drawFigure(data[0], geometry, bigProjection);
 
+    toggleClasses("sm-active", "sm-inactive", d3.select(d3.selectAll(".small-map-group").nodes()[0]));
+
     d3.selectAll(".small-map-group")
       .on("click", function(d) {
-        if(!d3.select(this).classed("active")) {
-          toggleClasses("active", "inactive", d3.select(this));
+        if(!d3.select(this).classed("sm-active")) {
+          toggleClasses("sm-active", "sm-inactive", d3.select(this));
           updateColor(d);
           d3.selectAll(".big-map-path")
             .on("mouseover", function(e) {

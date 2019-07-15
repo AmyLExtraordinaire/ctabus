@@ -1,4 +1,26 @@
 var rtInfo = {
+	"X49": {
+		'rtno': "X49",
+		'rtnm': "Western Express",
+		'neg': "Southbound",
+		'pos': "Northbound", 
+		'pidNeg': 7871,
+		'pidPos': 7873,
+		'stpidTerminalNeg': 8307,
+		'stpidTerminalPos': 14182,
+		'rtinfo': "<a>Route X49 Western Express</a> operates during morning and evening rush hour every weekday. It travels along the same path as Route 49 Western but makes fewer stops, stopping approximately every 4 blocks or half-mile."
+	},
+	"52": {
+		'rtno': "52",
+		'rtnm': "Kedzie/California",
+		'neg': "Southbound",
+		'pos': "Northbound", 
+		'pidNeg': 6650,
+		'pidPos': 6647,
+		'stpidTerminalNeg': 3099,
+		'stpidTerminalPos': 17786,
+		'rtinfo': "<a>Route 52 Kedzie/California</a> operates from early morning to late evening every day along California between Chicago and Addison and along Kedzie between Chicago and 63rd Place. The route serves neighborhoods on the Northwest and Southwest Sides, including Avondale, Logan Square, Humboldt Park, East Garfield Park, North Lawndale, Little Village, Brighton Park, Gage Park, and Chicago Lawn."
+	},
 	"55": {
 		'rtno': "55",
 		'rtnm': "Garfield",
@@ -21,6 +43,13 @@ var rtInfo = {
 		'stpidTerminalPos': 15417,
 		'rtinfo': "<a>Route 73 Armitage</a> operates from early morning to late evening on weekdays along Armitage Avenue between Clark & North and Grand & Laramie. Service ends in the early evening on weekends. The route serves neighborhoods on the North and West Sides, including Lincoln Park, Bucktown, Logan Square, Hermosa, and Belmont Craigin."
 	}
+}
+
+var directionAbbrv = {
+  "Northbound": "NB",
+  "Eastbound": "EB",
+  "Southbound": "SB",
+  "Westbound": "WB"
 }
 
 var routeSelect = d3.select("#route-select");
