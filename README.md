@@ -2,7 +2,7 @@
 
 CTA Bus Data Analysis is an ongoing project to analyze the performance of the Chicago Transit Authority's bus routes. 
 
-Visit the current project page: [https://spencerchan.github.io/ctabus](https://spencerchan.github.io/ctabus)
+Visit the current project page: [https://sabrinadchan.github.io/ctabus](https://sabrinadchan.github.io/ctabus)
 
 ## Motivation
 This project started because I kept having bad luck catching the bus. I wanted to know: is the bus schedule for CTA route 55 Garfield overpromising on its late-afternoon wait times or am I just unlucky? Asked more precisely: is 20 minutes an unreasonable amount of time to wait for an eastbound 55 Garfield bus at the Garfield Red Line Station at 4pm on a weekday? Since answering this question, the project has morphed into something larger and more ambitious.
@@ -26,7 +26,7 @@ The project is actively collecting and analyzing data. Throughout 2019, bus loca
 ## Data Sources
 Bus location data is gathered from the CTA [Bus Tracker](http://www.transitchicago.com/developers/bustracker.aspx)’s **`getvehicles`** API at a regular interval via a Python script run as a cron job. The Bus Tracker family of APIs provides near-real-time locations and estimated arrival times of all CTA buses. The API makes accessible only the most recent position for each vehicle, hence the need to regularly access the API and archive the data.
 
-Supporting data, such as the locations of bus stops, also comes from the Bus Tracker API. Read the [documentation](https://github.com/spencerchan/ctabus/blob/master/references/cta_Bus_Tracker_API_Developer_Guide_and_Documentation_20160929.pdf) to learn more about what data is available through the API and how to access it. Scheduled service data is obtained from the [CTA's GTFS feed](https://www.transitchicago.com/developers/gtfs/).
+Supporting data, such as the locations of bus stops, also comes from the Bus Tracker API. Read the [documentation](https://github.com/sabrinadchan/ctabus/blob/master/references/cta_Bus_Tracker_API_Developer_Guide_and_Documentation_20160929.pdf) to learn more about what data is available through the API and how to access it. Scheduled service data is obtained from the [CTA's GTFS feed](https://www.transitchicago.com/developers/gtfs/).
 
 For the purposes of this project, the most important data collected from **`getvehicles`** is the location of each vehicle along its route (`pdist`) and the time the vehicle was at that location (`tmstmp`). We can discover a lot using those two pieces of information, especially when combined with the bus stop location data, including: the speed of a bus, the wait time between two buses at a particular stop, the travel time between two stops, and more.
 
@@ -45,8 +45,8 @@ The current project website and its visualizations focus on bus location data co
 * Publish raw data
 
 ## Featured Notebooks
-* [Visualizing Bus Bunching on Route 73 Armitage](https://nbviewer.jupyter.org/github/spencerchan/ctabus/blob/master/notebooks/Visualizing%20Bus%20Bunching.ipynb)
-* [Toward Neighborhood-Level Analysis: Bus Service in Logan Square](https://nbviewer.jupyter.org/github/spencerchan/ctabus/blob/master/notebooks/Toward%20Neighborhood-Level%20Analysis%20-%20Bus%20Service%20in%20Logan%20Square.ipynb)
+* [Visualizing Bus Bunching on Route 73 Armitage](https://nbviewer.jupyter.org/github/sabrinadchan/ctabus/blob/master/notebooks/Visualizing%20Bus%20Bunching.ipynb)
+* [Toward Neighborhood-Level Analysis: Bus Service in Logan Square](https://nbviewer.jupyter.org/github/sabrinadchan/ctabus/blob/master/notebooks/Toward%20Neighborhood-Level%20Analysis%20-%20Bus%20Service%20in%20Logan%20Square.ipynb)
 
 ## Directory structure
 ```bash
@@ -66,7 +66,7 @@ The current project website and its visualizations focus on bus location data co
 ```
 
 ## Author
-**Spencer Chan**  - [https://github.com/spencerchan](https://github.com/spencerchan)
+**Sabrina Chan**  - [https://github.com/sabrinadchan](https://github.com/sabrinadchan)
 
 ## Acknowledgments
 I started this project as a participant in the Spring 2017 [ChiPy Mentorship Program](https://chipymentor.org). I want to thank my mentor, Matt Hall, for his support and guidance while I learned Python for the first time. Special thanks to the program director, Ray Berg, without whose hard work and organization, the program would not have been possible. Data was collected from the Chicago Transit Authority's [Bus Tracker API](http://www.transitchicago.com/developers/bustracker.aspx).
