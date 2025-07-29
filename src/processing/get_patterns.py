@@ -16,7 +16,7 @@ def get_patterns(pids, rt):
   tools.check_if_path_exists(definitions.PATTERNS_DIR)
   
   # the getpatterns API only accepts upto 10 patterns at a time
-  pids_chunks = [pids[i:i+10] for i in xrange(0, len(pids), 10)]
+  pids_chunks = [pids[i:i+10] for i in range(0, len(pids), 10)]
   for chunk in pids_chunks:
     pids_str = ",".join(chunk)
     payload = {'key': API_KEY, 'pid': pids_str, 'format': "json"}
@@ -33,7 +33,7 @@ def main(db_path, rt):
   #if not rts:
   #  rts = tools.load_routes()
 
-  print "fetching patterns for route {}...".format(rt)
+  print ("fetching patterns for route {}...".format(rt))
 
   with sqlite3.connect(db_path) as conn:
     sql = "SELECT DISTINCT pid FROM vehicles;"

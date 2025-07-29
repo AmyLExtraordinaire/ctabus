@@ -17,7 +17,7 @@ def shift_terminal_stop_pdists(patterns):
 def remove_unknown_patterns(df, patterns):    
   not_include = set(df.pid) - set(patterns.pid)
   df.drop(df[df.pid.isin(not_include)].index, inplace=True)
-  print "Deleted pattern IDs {}".format(list(not_include))
+  print("Deleted pattern IDs {}".format(list(not_include)))
 
 def create_unique_ids(df):
   df["unix_tmstmp"] = df.tmstmp.apply(lambda x: arrow.get(x, 'US/Central').timestamp)
@@ -105,20 +105,20 @@ def write_timetable(timetable, rt, tag):
   timetable.to_csv(out_path, index=False)
 
 def main(rt, tag, start_date, end_date):
-  print "processing route {} for period {}...".format(rt, tag)
+  print ("processing route {} for period {}...".format(rt, tag))
 
   df = tools.load_raw_data(rt, start_date=start_date, end_date=end_date)
-  print "loaded raw data"
+  print ("loaded raw data")
   patterns = tools.load_patterns(rt, False)
-  print "loaded patterns"
+  print ("loaded patterns")
   shift_terminal_stop_pdists(patterns)
-  print "shifted terminal stops"
+  print ("shifted terminal stops")
   clean(df, patterns)
-  print "cleaned"
+  print ("cleaned")
   timetable = build_timetable(df, patterns)
-  print "built timetable"
+  print ("built timetable")
   write_timetable(timetable, rt, tag)
-  print "saved"
+  print ("saved")
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()

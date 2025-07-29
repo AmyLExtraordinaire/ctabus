@@ -31,8 +31,8 @@ def configure_logger(log_path):
 
 def load_bus_schedule(filepath):
   schedule = pd.read_csv(filepath, dtype=str)
-  schedule.first_departure = (pd.to_datetime(schedule.first_departure)).dt.time
-  schedule.last_arrival = (pd.to_datetime(schedule.last_arrival)).dt.time
+  schedule.first_departure = (pd.to_datetime(schedule.first_departure, format="%H:%M:%S")).dt.time
+  schedule.last_arrival = (pd.to_datetime(schedule.last_arrival, format="%H:%M:%S")).dt.time
   return schedule    
 
 def get_active_routes():
@@ -60,7 +60,7 @@ def get_vehicles(api_key):
   
   routes = get_active_routes()
 
-  rt_chunks = [routes[i:i+10] for i in xrange(0, len(routes), 10)]
+  rt_chunks = [routes[i:i+10] for i in range(0, len(routes), 10)]
   for chunk in rt_chunks:
     rts_str = ",".join(chunk)
     payload = {'key': api_key, 'rt': rts_str, 'tmres': 's', 'format': 'json'}

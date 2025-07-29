@@ -93,17 +93,17 @@ def write_travel_waits(travels_waits, rt, rtdir, tag):
   travels_waits.to_csv(out_path, index=False)
 
 def main(rt, tag):
-  print "processing route {} for period {}...".format(rt, tag)
+  print ("processing route {} for period {}...".format(rt, tag))
   timetable = tools.load_timetable(rt, tag)
-  print "loaded timetable"
+  print ("loaded timetable")
   patterns = tools.load_patterns(rt, False)
-  print "loaded patterns"
+  print ("loaded patterns")
 
   for rtdir in patterns.rtdir.unique():
     travels_waits = build_travel_waits_df(timetable, patterns, rtdir)
-    print "built {} travels_waits".format(rtdir)
+    print ("built {} travels_waits".format(rtdir))
     write_travel_waits(travels_waits, rt, rtdir, tag)
-    print "saved {} travels_waits".format(rtdir)
+    print ("saved {} travels_waits".format(rtdir))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
